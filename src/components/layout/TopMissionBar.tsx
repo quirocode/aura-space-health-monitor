@@ -8,10 +8,13 @@ import {
   Rocket, 
   Mic, 
   Compass,
-  AlertTriangle
+  AlertTriangle,
+  Command,
+  Moon,
+  BookOpen
 } from 'lucide-react';
 
-interface TopMissionBarProps {
+export interface TopMissionBarProps {
   currentDay: number;
   currentEnv: EnvironmentId;
   onSelectEnv: (env: EnvironmentId) => void;
@@ -24,6 +27,15 @@ interface TopMissionBarProps {
   onToggleEvaMode: () => void;
   onOpenPitchModal: () => void;
   onOpenCrisisModal?: () => void;
+  // M4 additions
+  onOpenCommandPalette?: () => void;
+  isCircadianActive?: boolean;
+  onToggleCircadian?: () => void;
+  isEvidenceOpen?: boolean;
+  onOpenEvidence?: () => void;
+  // M5 additions
+  isBlackoutActive?: boolean;
+  onToggleBlackout?: () => void;
 }
 
 const ENVIRONMENTS: { id: EnvironmentId; label: string; gravity: string; delay: string }[] = [
@@ -46,6 +58,13 @@ export const TopMissionBar: React.FC<TopMissionBarProps> = ({
   onToggleEvaMode,
   onOpenPitchModal,
   onOpenCrisisModal,
+  onOpenCommandPalette,
+  isCircadianActive = false,
+  onToggleCircadian,
+  isEvidenceOpen = false,
+  onOpenEvidence,
+  isBlackoutActive = false,
+  onToggleBlackout,
 }) => {
   const currentEnvData = ENVIRONMENTS.find(e => e.id === currentEnv) || ENVIRONMENTS[1];
 
@@ -62,8 +81,8 @@ export const TopMissionBar: React.FC<TopMissionBarProps> = ({
               <span className="font-mono text-sm font-semibold tracking-wider text-slate-100">
                 AURA-EIMO
               </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700/60 hidden sm:inline">
-                v3.0 // NASA ExMC Suite
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-sky-400 border border-slate-700/60 hidden sm:inline font-semibold">
+                v4.0 // Scientific Validation & Multi-Agency Excellence
               </span>
             </div>
           </div>
@@ -126,6 +145,50 @@ export const TopMissionBar: React.FC<TopMissionBarProps> = ({
 
       {/* Right: Quick Action Controls */}
       <div className="flex items-center gap-2 font-mono text-xs">
+        {/* Command Palette Launcher (⌘K) */}
+        {onOpenCommandPalette && (
+          <button
+            onClick={onOpenCommandPalette}
+            className="bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-sky-500/50 px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white flex items-center gap-1.5 transition-all text-xs font-mono shadow-sm"
+            title="Abrir paleta de comandos rápidos (Ctrl+K / ⌘K)"
+          >
+            <Command className="w-3.5 h-3.5 text-sky-400" />
+            <span className="hidden sm:inline text-[11px] font-semibold text-slate-400">⌘K</span>
+          </button>
+        )}
+
+        {/* Circadian Night Mode Toggle (480nm-off) */}
+        {onToggleCircadian && (
+          <button
+            onClick={onToggleCircadian}
+            className={`px-2.5 py-1.5 rounded-lg border flex items-center gap-1.5 font-medium transition-all text-xs font-mono ${
+              isCircadianActive
+                ? 'bg-amber-950/80 border-amber-500/80 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+                : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+            }`}
+            title="Filtro Circadiano 480nm-off: Preservación de melatonina"
+          >
+            <Moon className={`w-3.5 h-3.5 ${isCircadianActive ? 'text-amber-400 animate-pulse' : 'text-slate-400'}`} />
+            <span className="hidden sm:inline">{isCircadianActive ? '480nm OFF' : 'Circadiano'}</span>
+          </button>
+        )}
+
+        {/* Scientific Evidence Drawer Button */}
+        {onOpenEvidence && (
+          <button
+            onClick={onOpenEvidence}
+            className={`px-2.5 py-1.5 rounded-lg border flex items-center gap-1.5 font-medium transition-all text-xs font-mono ${
+              isEvidenceOpen
+                ? 'bg-indigo-950/80 border-indigo-500/80 text-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.25)]'
+                : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+            }`}
+            title="Abrir repositorio de evidencia científica multi-agencia (NASA, ESA, JAXA)"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="hidden md:inline">📚 Evidencia</span>
+          </button>
+        )}
+
         {/* Compact Voice Capsule Trigger */}
         <button
           onClick={onToggleVoice}
@@ -185,11 +248,28 @@ export const TopMissionBar: React.FC<TopMissionBarProps> = ({
           {isMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-sky-400" />}
         </button>
 
-        {/* Offline Badge */}
-        <div className="hidden xl:flex items-center gap-1 text-[11px] text-slate-400 px-2 py-1 bg-slate-900/60 rounded border border-slate-800">
-          <WifiOff className="w-3 h-3 text-emerald-400" />
-          <span>Local</span>
-        </div>
+        {/* Deep-Space Blackout Resilience Toggle Button & Prominent Header Badge */}
+        <button
+          onClick={onToggleBlackout}
+          className={`px-2.5 py-1.5 rounded-lg border flex items-center gap-1.5 font-medium transition-all text-xs font-mono ${
+            isBlackoutActive
+              ? 'bg-rose-950/90 border-rose-500/80 text-rose-200 shadow-[0_0_16px_rgba(244,63,94,0.4)] animate-pulse'
+              : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+          }`}
+          title="Alternar Modo Deep-Space Blackout (Autonomía 100% local, Red: 0 Bps)"
+        >
+          <WifiOff className={`w-3.5 h-3.5 ${isBlackoutActive ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`} />
+          {isBlackoutActive ? (
+            <span className="font-bold text-rose-300">
+              [⚡ DEEP-SPACE BLACKOUT // AUTONOMÍA 100% LOCAL // RED: 0 Bps]
+            </span>
+          ) : (
+            <>
+              <span className="hidden xl:inline text-emerald-400 font-semibold">[⚡ AUTONOMÍA 100% LOCAL // RED: 0 Bps]</span>
+              <span className="xl:hidden text-emerald-400">Local</span>
+            </>
+          )}
+        </button>
       </div>
     </header>
   );

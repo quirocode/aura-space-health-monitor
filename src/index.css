@@ -66,3 +66,28 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
+
+/* ========================================================================= */
+/* Circadian Night Mode: 480nm-off Spectral Blue Light Attenuation           */
+/* NASA HRP & ISS SSLA standard: suppresses <= 480nm cyan-blue to protect    */
+/* pineal melatonin secretion and maintain cognitive performance.            */
+/* ========================================================================= */
+.circadian-night-mode,
+.circadian-night-active {
+  filter: sepia(0.38) hue-rotate(-18deg) saturate(1.22) brightness(0.93);
+  transition: filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.circadian-night-mode .text-sky-400,
+.circadian-night-mode .text-cyan-400,
+.circadian-night-active .text-sky-400,
+.circadian-night-active .text-cyan-400 {
+  color: #fbbf24 !important; /* Soft warm amber override */
+}
+
+.circadian-night-mode .border-cyan-500,
+.circadian-night-mode .border-sky-500,
+.circadian-night-active .border-cyan-500,
+.circadian-night-active .border-sky-500 {
+  border-color: rgba(245, 158, 11, 0.5) !important;
+}

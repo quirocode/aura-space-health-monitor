@@ -4,7 +4,7 @@ import type { HealthStatus, EnvironmentId } from './index';
 // CAPACITY 1: POCUS EDGE AI (Ocular B-Scan & Echocardiography)
 // -------------------------------------------------------------
 
-export type PocusScanMode = 'ocular_sans' | 'parasternal_echo';
+export type PocusScanMode = 'ocular_sans' | 'parasternal_echo' | 'ijv_thrombosis';
 
 export interface PocusCaliperMeasurement {
   onsd_mm: number;
@@ -23,6 +23,15 @@ export interface EchoMeasurement {
   status: HealthStatus;
 }
 
+export interface IjvThrombosisMetrics {
+  crossSectionalArea_cm2: number; // 0.6 normal 1g, >2.0 in 0g
+  flowVelocity_cm_s: number; // Positive = anterograde, Negative = retrograde
+  flowDirection: 'anterograde' | 'retrograde' | 'stagnant';
+  compressibilityPercentage: number; // 0-100% under probe pressure
+  thrombusDetected: boolean;
+  lbnpActive: boolean; // Lower Body Negative Pressure (-35 mmHg)
+}
+
 // -------------------------------------------------------------
 // CAPACITY 2: REAL-TIME 60 FPS WAVE MONITOR (ECG & PPG)
 // -------------------------------------------------------------
@@ -32,6 +41,13 @@ export type EcgScenario =
   | 'pvc_microgravity'
   | 'tachycardia_stress';
 
+export interface AutonomicBalanceMetrics {
+  hrvRmssd_ms: number; // Root Mean Square of Successive RR differences (ms)
+  sympathovagalRatio_lf_hf: number; // LF/HF power ratio (>2.5 sympathetic, <1.5 balanced)
+  qrsElectricalAxis_deg: number; // Frontal QRS axis (+54° 1g vs +18° 0g)
+  gravityEnvironment: '1g_earth' | '0g_microgravity';
+}
+
 export interface WaveMonitorMetrics {
   heartRate_bpm: number;
   prInterval_ms: number;
@@ -40,6 +56,10 @@ export interface WaveMonitorMetrics {
   spo2_percent: number;
   perfusionIndex: number;
   scenario: EcgScenario;
+  hrvRmssd_ms: number;
+  sympathovagalRatio_lf_hf: number;
+  qrsElectricalAxis_deg: number;
+  gravityEnvironment: '1g_earth' | '0g_microgravity';
 }
 
 // -------------------------------------------------------------

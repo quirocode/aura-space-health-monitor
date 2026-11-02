@@ -12,6 +12,8 @@ interface MetricCardProps {
   thresholds: MetricThresholds;
   onOpenInfo?: () => void;
   icon?: React.ReactNode;
+  evidenceId?: string;
+  onOpenEvidence?: (id: string) => void;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -23,6 +25,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   thresholds,
   onOpenInfo,
   icon,
+  evidenceId,
+  onOpenEvidence,
 }) => {
   const numVal = typeof value === 'number' ? value : parseFloat(String(value));
   const status: HealthStatus = isNaN(numVal)
@@ -82,21 +86,36 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <div className={`hud-panel rounded-xl p-3.5 border ${style.border} text-slate-200 transition-all flex flex-col justify-between relative select-none`}>
       <div>
-        {/* Card Header: Title & Info */}
+        {/* Card Header: Title & Info / [Ref] */}
         <div className="flex justify-between items-center mb-1">
           <div className="flex items-center gap-1.5 text-slate-400 text-xs font-mono">
             {icon}
             <span className="text-[11px] uppercase tracking-wider text-slate-400 font-medium">{title}</span>
           </div>
-          {onOpenInfo && (
-            <button
-              onClick={onOpenInfo}
-              title="Explicación clínica y fuente"
-              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
-            >
-              <Info className="w-3.5 h-3.5" />
-            </button>
-          )}
+          <div className="flex items-center gap-1.5">
+            {evidenceId && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenEvidence?.(evidenceId);
+                }}
+                title={`Ver evidencia científica oficial: ${evidenceId}`}
+                className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700/80 hover:border-sky-500/60 hover:bg-sky-950/40 text-sky-400 hover:text-sky-300 transition-colors cursor-pointer"
+              >
+                [Ref]
+              </button>
+            )}
+            {onOpenInfo && (
+              <button
+                onClick={onOpenInfo}
+                title="Explicación clínica y fuente"
+                className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Current Value with Tabular Numerics */}
@@ -132,7 +151,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
       {/* Footer: Environment Reference & Status Badge */}
       <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
-        <span className="text-slate-500 truncate max-w-[120px]" title={thresholds.sourceNote}>
+        <span
+          className={`text-slate-500 truncate max-w-[130px] ${evidenceId && onOpenEvidence ? 'cursor-pointer hover:text-sky-400 transition-colors' : ''}`}
+          title={thresholds.sourceNote}
+          onClick={evidenceId && onOpenEvidence ? () => onOpenEvidence(evidenceId) : undefined}
+        >
           Ref: {thresholds.minNominal}-{thresholds.maxNominal}
         </span>
         <div className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${style.badge} flex items-center gap-1.5`}>

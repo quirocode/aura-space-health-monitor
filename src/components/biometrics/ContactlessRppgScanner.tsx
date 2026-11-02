@@ -59,7 +59,7 @@ export const ContactlessRppgScanner: React.FC<ContactlessRppgScannerProps> = ({
         videoRef.current.play();
         setIsCameraActive(true);
       }
-    } catch (err) {
+    } catch {
       setCameraError('Acceso denegado o cámara no disponible. Ejecutando simulación óptica.');
       setIsCameraActive(false);
     }

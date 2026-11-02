@@ -1,14 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { BodyRegionId, EnvironmentId, TelemetryReading } from './types';
 import type { VoiceCommandAction } from './types/aerospaceClinical';
 import { SpaceflightSimulationEngine } from './services/simulationEngine';
 import { spaceAudioService } from './services/audioService';
+import { missionStorageService } from './services/storageService';
 import { CLINICAL_THRESHOLDS_BY_ENV } from './config/clinicalThresholds';
 
 // Ergonomic Layout & Workspaces
 import { TopMissionBar } from './components/layout/TopMissionBar';
 import { WorkspaceNavigation } from './components/layout/WorkspaceNavigation';
 import type { WorkspaceId } from './components/layout/WorkspaceNavigation';
+import { QuickCommandPalette } from './components/layout/QuickCommandPalette';
+import { ScientificEvidenceDrawer } from './components/science/ScientificEvidenceDrawer';
 
 // Core Cockpit Components
 import { TimelineControls } from './components/TimelineControls';
@@ -63,6 +66,13 @@ export const App: React.FC = () => {
   const [isCrisisModalOpen, setIsCrisisModalOpen] = useState<boolean>(false);
   const [injectedOnsd, setInjectedOnsd] = useState<number | null>(null);
   const [injectedHeartRate, setInjectedHeartRate] = useState<number | null>(null);
+
+  // M4 Ergonomic UX, Command Palette & Circadian States
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
+  const [isCircadianActive, setIsCircadianActive] = useState<boolean>(false);
+  const [isBlackoutActive, setIsBlackoutActive] = useState<boolean>(false);
+  const [isEvidenceDrawerOpen, setIsEvidenceDrawerOpen] = useState<boolean>(false);
+  const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(null);
 
   // Sub-tabs for Workspaces (Progressive Disclosure)
   const [surveillanceSubTab, setSurveillanceSubTab] = useState<'triage' | 'pvt' | 'spinoff'>('triage');
@@ -202,8 +212,69 @@ export const App: React.FC = () => {
     }
   };
 
+  // Global Hotkey Binding: Ctrl+K / Meta+K (Command Palette) and Keys 1-4 (Workstations)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInput = target && (
+        target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' || 
+        target.isContentEditable
+      );
+
+      // Ctrl+K / Meta+K: toggle command palette
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+        return;
+      }
+
+      // Keys 1-4: Quick workstation jumping when not typing in input
+      if (!isInput && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (e.key === '1') {
+          setActiveWorkspace('surveillance');
+        } else if (e.key === '2') {
+          setActiveWorkspace('diagnostics');
+        } else if (e.key === '3') {
+          setActiveWorkspace('predictive');
+        } else if (e.key === '4') {
+          setActiveWorkspace('eva');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
+  // Command Palette Action Handlers
+  const handleTriggerEmergency = (protocolId: 'cpr' | 'dcs' | 'anaphylaxis' | 'fire') => {
+    setIsCommandPaletteOpen(false);
+    if (protocolId === 'cpr') {
+      setIsCrisisModalOpen(true);
+    } else if (protocolId === 'dcs') {
+      setActiveWorkspace('eva');
+    } else if (protocolId === 'anaphylaxis') {
+      setActiveWorkspace('predictive');
+      setPredictiveSubTab('pharmacy');
+    } else if (protocolId === 'fire') {
+      setActiveWorkspace('surveillance');
+      setSurveillanceSubTab('triage');
+    }
+  };
+
+  const handleDownloadFhir = () => {
+    missionStorageService.downloadFhirBundleJson(currentTelemetry);
+  };
+
+  const handleDownloadSurgeonReport = () => {
+    missionStorageService.downloadFlightSurgeonReportMd(currentTelemetry, currentEnv.toUpperCase());
+  };
+
   return (
-    <div className="min-h-screen bg-[#0b0f17] text-slate-100 flex flex-col cockpit-grid selection:bg-sky-500/30 selection:text-sky-200">
+    <div className={`min-h-screen bg-[#0b0f17] text-slate-100 flex flex-col cockpit-grid selection:bg-sky-500/30 selection:text-sky-200 ${
+      isCircadianActive ? 'circadian-night-mode circadian-night-active' : ''
+    }`}>
       {/* Top Compact Mission Bar (Height fixed at h-16) */}
       <TopMissionBar
         currentDay={currentDay}
@@ -218,7 +289,35 @@ export const App: React.FC = () => {
         onToggleEvaMode={() => setActiveWorkspace(activeWorkspace === 'eva' ? 'surveillance' : 'eva')}
         onOpenPitchModal={() => setIsPitchModalOpen(true)}
         onOpenCrisisModal={() => setIsCrisisModalOpen(true)}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        isCircadianActive={isCircadianActive}
+        onToggleCircadian={() => setIsCircadianActive(prev => !prev)}
+        isEvidenceOpen={isEvidenceDrawerOpen}
+        onOpenEvidence={() => setIsEvidenceDrawerOpen(true)}
+        isBlackoutActive={isBlackoutActive}
+        onToggleBlackout={() => setIsBlackoutActive(prev => !prev)}
       />
+
+      {/* Prominent Deep-Space Blackout Resilience Banner */}
+      {isBlackoutActive && (
+        <div className="bg-rose-950/95 border-b border-rose-500/80 px-4 sm:px-6 py-2 text-xs font-mono text-rose-200 flex items-center justify-between shadow-[0_4px_20px_rgba(244,63,94,0.35)] animate-fadeIn select-none">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+            <span className="font-bold tracking-wider text-rose-300">
+              [⚡ DEEP-SPACE BLACKOUT // AUTONOMÍA 100% LOCAL // RED: 0 Bps]
+            </span>
+            <span className="hidden lg:inline text-rose-200/90 text-[11px]">
+              — Corte total de enlace DSN con Tierra por conjunción solar. Suite operando en autonomía de borde 100% local (Edge AI, Web Audio, PWA y persistencia IndexedDB).
+            </span>
+          </div>
+          <button
+            onClick={() => setIsBlackoutActive(false)}
+            className="text-[10px] px-2.5 py-1 rounded bg-rose-900 hover:bg-rose-800 border border-rose-600 text-rose-100 font-bold transition-colors shadow-sm ml-2"
+          >
+            Restablecer DSN
+          </button>
+        </div>
+      )}
 
       {/* Main Cockpit App Shell (Max width 1600px with generous spacing) */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 space-y-4">
@@ -656,11 +755,23 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* NASA Jury 3-Minute Walkthrough Modal */}
+      {/* NASA Jury 3-Minute Walkthrough & Official Rubric Modal */}
       <ExecutivePitchModal
         isOpen={isPitchModalOpen}
         onClose={() => setIsPitchModalOpen(false)}
         onRunStationAction={handleRunPitchStationAction}
+        onOpenEvidence={() => setIsEvidenceDrawerOpen(true)}
+        onOpenEvaHud={() => setActiveWorkspace('eva')}
+        onToggleCircadian={() => setIsCircadianActive(prev => !prev)}
+        onDownloadFhir={handleDownloadFhir}
+        onToggleBlackout={() => setIsBlackoutActive(prev => !prev)}
+        onSelectWorkspace={(ws) => setActiveWorkspace(ws)}
+        onSelectSurveillanceTab={(tab) => setSurveillanceSubTab(tab)}
+        onSelectDiagnosticsTab={(tab) => setDiagnosticsSubTab(tab)}
+        onSelectPredictiveTab={(tab) => setPredictiveSubTab(tab)}
+        onOpenCrisisModal={() => setIsCrisisModalOpen(true)}
+        isBlackoutActive={isBlackoutActive}
+        isCircadianActive={isCircadianActive}
       />
 
       {/* Educational Modals */}
@@ -674,12 +785,47 @@ export const App: React.FC = () => {
         onClose={() => setGuideModalRegion(null)}
       />
 
+      {/* Quick Command Palette (Ctrl+K / ⌘K) */}
+      <QuickCommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onSelectWorkspace={(ws) => {
+          setActiveWorkspace(ws);
+          setIsCommandPaletteOpen(false);
+        }}
+        onTriggerEmergency={handleTriggerEmergency}
+        onDownloadFhir={handleDownloadFhir}
+        onDownloadSurgeonReport={handleDownloadSurgeonReport}
+        onToggleCircadian={() => setIsCircadianActive(prev => !prev)}
+        onToggleBlackout={() => setIsBlackoutActive(prev => !prev)}
+        onToggleSolarStorm={handleTriggerSolarStorm}
+        onOpenPitch={() => {
+          setIsCommandPaletteOpen(false);
+          setIsPitchModalOpen(true);
+        }}
+        onOpenEvidence={() => {
+          setIsCommandPaletteOpen(false);
+          setIsEvidenceDrawerOpen(true);
+        }}
+        isCircadianActive={isCircadianActive}
+        isBlackoutActive={isBlackoutActive}
+        isSolarStormActive={solarStormActive}
+      />
+
+      {/* Scientific Evidence Drawer (NASA / ESA / JAXA Multi-Agency Registry) */}
+      <ScientificEvidenceDrawer
+        isOpen={isEvidenceDrawerOpen}
+        onClose={() => setIsEvidenceDrawerOpen(false)}
+        initialEvidenceId={selectedEvidenceId}
+        onSelectEvidence={(id) => setSelectedEvidenceId(id)}
+      />
+
       {/* Cockpit Status Bar Footer (Subdued) */}
       <footer className="hud-panel border-t border-white/[0.08] py-3.5 px-6 text-xs font-mono text-slate-500 mt-6 select-none">
         <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="text-slate-300 font-medium">AURA-EIMO v3.0 // Deep-Space Autonomous Clinical Suite</span>
+            <span className="text-slate-300 font-medium">AURA-EIMO v4.0 // Scientific Validation &amp; Multi-Agency Excellence</span>
             <span className="text-slate-700">|</span>
             <span className="text-slate-400">NASA Space Apps Challenge 2026</span>
           </div>
