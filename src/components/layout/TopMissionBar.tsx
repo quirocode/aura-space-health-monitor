@@ -251,22 +251,25 @@ export const TopMissionBar: React.FC<TopMissionBarProps> = ({
         {/* Deep-Space Blackout Resilience Toggle Button & Prominent Header Badge */}
         <button
           onClick={onToggleBlackout}
-          className={`px-2.5 py-1.5 rounded-lg border flex items-center gap-1.5 font-medium transition-all text-xs font-mono ${
+          className={`px-2.5 py-1.5 rounded-lg border flex items-center gap-1.5 font-medium transition-all text-xs font-mono focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:outline-none ${
             isBlackoutActive
               ? 'bg-rose-950/90 border-rose-500/80 text-rose-200 shadow-[0_0_16px_rgba(244,63,94,0.4)] animate-pulse'
               : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
           }`}
           title="Alternar Modo Deep-Space Blackout (Autonomía 100% local, Red: 0 Bps)"
         >
-          <WifiOff className={`w-3.5 h-3.5 ${isBlackoutActive ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`} />
+          <WifiOff className={`w-3.5 h-3.5 shrink-0 ${isBlackoutActive ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`} />
           {isBlackoutActive ? (
-            <span className="font-bold text-rose-300">
-              [⚡ DEEP-SPACE BLACKOUT // AUTONOMÍA 100% LOCAL // RED: 0 Bps]
-            </span>
+            <>
+              <span className="hidden xl:inline font-bold text-rose-300">
+                [⚡ DEEP-SPACE BLACKOUT // AUTONOMÍA 100% LOCAL // RED: 0 Bps]
+              </span>
+              <span className="xl:hidden font-bold text-rose-300">⚡ BLACKOUT</span>
+            </>
           ) : (
             <>
               <span className="hidden xl:inline text-emerald-400 font-semibold">[⚡ AUTONOMÍA 100% LOCAL // RED: 0 Bps]</span>
-              <span className="xl:hidden text-emerald-400">Local</span>
+              <span className="xl:hidden text-emerald-400 font-semibold">⚡ LOCAL EDGE</span>
             </>
           )}
         </button>

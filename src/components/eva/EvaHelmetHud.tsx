@@ -41,6 +41,7 @@ interface EvaHelmetHudProps {
   currentEnv: EnvironmentId;
   currentDay: number;
   isSolarStormActive?: boolean;
+  onToggleSolarStorm?: () => void;
   onExitEva: () => void;
 }
 
@@ -48,6 +49,7 @@ export const EvaHelmetHud: React.FC<EvaHelmetHudProps> = ({
   currentEnv,
   currentDay,
   isSolarStormActive = false,
+  onToggleSolarStorm,
   onExitEva
 }) => {
   // Scrubber saturation simulation slider
@@ -114,7 +116,12 @@ export const EvaHelmetHud: React.FC<EvaHelmetHudProps> = ({
 
   const solarStormActive = userStormOverride !== null ? userStormOverride : isSolarStormActive;
   const toggleSolarStorm = () => {
-    setUserStormOverride(prev => (prev !== null ? !prev : !isSolarStormActive));
+    if (onToggleSolarStorm) {
+      onToggleSolarStorm();
+      setUserStormOverride(null);
+    } else {
+      setUserStormOverride(prev => (prev !== null ? !prev : !isSolarStormActive));
+    }
   };
 
   // Radiation physics calculations
@@ -124,14 +131,15 @@ export const EvaHelmetHud: React.FC<EvaHelmetHudProps> = ({
 
   // Accumulated BFO dose baseline
   const baseDose = currentDay * (solarStormActive ? 2.8 : 0.65);
-  const [accumulatedBfoDose_mSv, setAccumulatedBfoDose_mSv] = useState<number>(baseDose);
+  const [sessionAdditionalDose, setSessionAdditionalDose] = useState<number>(0);
+  const accumulatedBfoDose_mSv = parseFloat((baseDose + sessionAdditionalDose).toFixed(2));
 
   // Update accumulated dose periodically if storm is active
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
     if (solarStormActive) {
       interval = setInterval(() => {
-        setAccumulatedBfoDose_mSv(prev => {
+        setSessionAdditionalDose(prev => {
           // add 10 seconds of equivalent dose rate: rate * (10 / 3600)
           const added = activeBfoDoseRate_mSv_h * (10 / 3600);
           return parseFloat((prev + added).toFixed(2));
@@ -205,12 +213,15 @@ export const EvaHelmetHud: React.FC<EvaHelmetHudProps> = ({
             <Shield className="w-6 h-6 animate-pulse" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/60 font-bold">
                 NASA xEMU SPACESUIT HUD // v4.0
               </span>
               <span className="text-[11px] text-slate-400">
                 {currentEnv === 'moon' ? 'SUPERFICIE LUNAR (0.16g)' : currentEnv === 'mars' ? 'SUPERFICIE MARTE (0.38g)' : 'MICROGRAVEDAD EXTRAVEHICULAR'}
+              </span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-500/40 text-amber-300 font-bold">
+                SIMULATED VALUE // ILLUSTRATIVE MODEL
               </span>
             </div>
             <h1 className="text-xl font-bold tracking-wider text-white">

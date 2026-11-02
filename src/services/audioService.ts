@@ -5,12 +5,43 @@
  * Complies with browser autoplay policies via lazy AudioContext initialization.
  */
 
-export class SpaceMedicalAudioService {
+export interface AudioServiceLifecycle {
+  init(): void;
+  suspend(): Promise<void>;
+  resume(): Promise<void>;
+  close(): Promise<void>;
+  setMuted(muted: boolean): void;
+}
+
+export class SpaceMedicalAudioService implements AudioServiceLifecycle {
   private ctx: AudioContext | null = null;
   private muted: boolean = true; // Default muted to comply with autoplay policy
 
   constructor() {
     // Lazily initialized on first user interaction
+  }
+
+  public init(): void {
+    this.ensureContext();
+  }
+
+  public async suspend(): Promise<void> {
+    if (this.ctx && this.ctx.state !== 'closed' && this.ctx.state !== 'suspended') {
+      await this.ctx.suspend();
+    }
+  }
+
+  public async resume(): Promise<void> {
+    if (this.ctx && this.ctx.state === 'suspended') {
+      await this.ctx.resume();
+    }
+  }
+
+  public async close(): Promise<void> {
+    if (this.ctx && this.ctx.state !== 'closed') {
+      await this.ctx.close();
+      this.ctx = null;
+    }
   }
 
   public ensureContext(): AudioContext | null {
@@ -138,6 +169,15 @@ export class SpaceMedicalAudioService {
 
     osc.connect(gain);
     gain.connect(ctx.destination);
+
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {
+        // Suppress disconnection errors if context was closed
+      }
+    };
 
     osc.start(startTime);
     osc.stop(startTime + duration + 0.02);

@@ -16,8 +16,41 @@ export const SpaceMedKitPharmacokinetics: React.FC<SpaceMedKitPharmacokineticsPr
   cumulativeRadiation_mSv = 24.5
 }) => {
   const [selectedMedId, setSelectedMedId] = useState<string>('acetazolamide');
-  const [patientWeightKg, setPatientWeightKg] = useState<number>(75);
+  const [patientWeightKg, setPatientWeightKg] = useState<number>(70);
   const [plasmaShiftPercent, setPlasmaShiftPercent] = useState<number>(12); // -12% plasma volume in 0g
+
+  // Dynamic Pharmacokinetic Parameters
+  // Volume of Distribution factor (scaled by mass and contracted by fluid shift)
+  const dynamicVdFactor = (patientWeightKg / 70) * (1 - plasmaShiftPercent / 100);
+  // Clearance factor (allometric metabolic exponent 0.75 and reduced organ perfusion)
+  const dynamicClFactor = Math.pow(patientWeightKg / 70, 0.75) * (1 - (plasmaShiftPercent * 0.5) / 100);
+
+  const getDynamicAdjustedDose = (medId: string): string => {
+    switch (medId) {
+      case 'acetazolamide': {
+        const doseMg = Math.round((250 * dynamicVdFactor) / 5) * 5;
+        return `${doseMg} mg cada 12h (Vd: ${(dynamicVdFactor * 100).toFixed(0)}%, volemia -${plasmaShiftPercent}%, ${patientWeightKg}kg)`;
+      }
+      case 'epinephrine': {
+        const doseMg = Number((0.3 * (patientWeightKg / 70) * (1 - (plasmaShiftPercent * 0.005))).toFixed(2));
+        return `${doseMg} mg IM autoinyector (Masa ${patientWeightKg}kg, Cl: ${(dynamicClFactor * 100).toFixed(0)}%)`;
+      }
+      case 'alendronate': {
+        const doseMg = Math.round(70 * (patientWeightKg / 70));
+        return `${doseMg} mg semanal en ayunas (${patientWeightKg}kg, 200 mL agua)`;
+      }
+      case 'potassium_citrate': {
+        const doseMeq = Math.round(20 * (patientWeightKg / 70) * (1 - plasmaShiftPercent / 100) / 0.88 * 0.90);
+        return `${doseMeq} mEq cada 8h (Corregido: -${plasmaShiftPercent}% volemia, masa ${patientWeightKg}kg)`;
+      }
+      case 'melatonin': {
+        const doseMg = Number((3.0 * (patientWeightKg / 70) * (1 - (plasmaShiftPercent * 0.01)) * 0.85).toFixed(1));
+        return `${doseMg} mg 30m pre-sueño (Metabolismo hepático en 0g, ${patientWeightKg}kg)`;
+      }
+      default:
+        return 'Ajuste según protocolo';
+    }
+  };
 
   // ISS & Orion Exploration Medical Kit Pharmacopeia
   const medInventory: SpaceMedItem[] = [
@@ -182,7 +215,7 @@ export const SpaceMedKitPharmacokinetics: React.FC<SpaceMedKitPharmacokineticsPr
 
               <div className="bg-slate-950/80 p-2.5 rounded-lg border border-purple-500/30 space-y-1">
                 <div className="text-[10px] text-purple-400 font-bold">DOSIS AJUSTADA ESPACIAL (0G)</div>
-                <div className="text-sm font-semibold text-purple-200">{currentMed.adjustedDoseText}</div>
+                <div className="text-sm font-semibold text-purple-200">{getDynamicAdjustedDose(currentMed.id)}</div>
               </div>
             </div>
 
@@ -199,7 +232,8 @@ export const SpaceMedKitPharmacokinetics: React.FC<SpaceMedKitPharmacokineticsPr
                   max="105"
                   value={patientWeightKg}
                   onChange={(e) => setPatientWeightKg(parseInt(e.target.value, 10))}
-                  className="w-full accent-purple-400 bg-slate-800 rounded-lg cursor-pointer"
+                  aria-label="Masa Corporal del Astronauta"
+                  className="w-full accent-purple-400 bg-slate-800 rounded-lg cursor-pointer focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none"
                 />
               </div>
 
@@ -210,12 +244,25 @@ export const SpaceMedKitPharmacokinetics: React.FC<SpaceMedKitPharmacokineticsPr
                 </div>
                 <input
                   type="range"
-                  min="5"
-                  max="20"
+                  min="0"
+                  max="25"
                   value={plasmaShiftPercent}
                   onChange={(e) => setPlasmaShiftPercent(parseInt(e.target.value, 10))}
-                  className="w-full accent-purple-400 bg-slate-800 rounded-lg cursor-pointer"
+                  aria-label="Desplazamiento e hipovolemia en 0g"
+                  className="w-full accent-purple-400 bg-slate-800 rounded-lg cursor-pointer focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none"
                 />
+              </div>
+            </div>
+
+            {/* Dynamic Pharmacokinetic Telemetry Badges */}
+            <div className="grid grid-cols-2 gap-2 pt-1 text-[11px] font-mono">
+              <div className="bg-slate-950/60 p-2 rounded-lg border border-slate-800/80 flex items-center justify-between">
+                <span className="text-slate-400">Vol. Distribución (Vd):</span>
+                <span className="text-purple-300 font-semibold tabular-telemetry">{(dynamicVdFactor * 100).toFixed(0)}% nominal</span>
+              </div>
+              <div className="bg-slate-950/60 p-2 rounded-lg border border-slate-800/80 flex items-center justify-between">
+                <span className="text-slate-400">Aclaramiento (Cl):</span>
+                <span className="text-sky-300 font-semibold tabular-telemetry">{(dynamicClFactor * 100).toFixed(0)}% nominal</span>
               </div>
             </div>
 

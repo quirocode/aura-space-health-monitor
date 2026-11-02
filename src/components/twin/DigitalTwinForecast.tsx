@@ -5,8 +5,9 @@ import type {
   ForecastDataPoint, 
   DigitalTwinVerdict 
 } from '../../types/aerospaceClinical';
+import type { EnvironmentId } from '../../types';
 import {
-  SPE_NOMINAL_PEAK_MSV_H,
+  SPE_NOMINAL_EVENT_TOTAL_MSV,
   SHELTER_ATTENUATION_TAU,
   SHELTER_AREAL_MASS_G_CM2,
   NASA_30_DAY_BFO_LIMIT_MSV,
@@ -26,6 +27,7 @@ import {
 
 interface DigitalTwinForecastProps {
   currentDay?: number;
+  currentEnv?: EnvironmentId;
 }
 
 export interface ExtendedForecastDataPoint extends ForecastDataPoint {
@@ -35,7 +37,8 @@ export interface ExtendedForecastDataPoint extends ForecastDataPoint {
 }
 
 export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
-  currentDay = 18
+  currentDay = 18,
+  currentEnv = 'microgravity'
 }) => {
   const [inputs, setInputs] = useState<DigitalTwinInputs>({
     aredHoursPerDay: 1.5, // slightly suboptimal to demonstrate divergence
@@ -55,18 +58,22 @@ export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
     let criticalSansDay: number | null = null;
     let bfoCriticalDay: number | null = null;
 
+    // Gravity scale factor: Earth (1g) has 0 atrophy; Moon (0.16g) has ~84% 0g atrophy; Mars (0.38g) has ~62% 0g atrophy; Microgravity (0g) has 100%
+    const gravityG = currentEnv === 'earth' ? 1.0 : currentEnv === 'moon' ? 0.16 : currentEnv === 'mars' ? 0.38 : 0.0;
+    const gravityAtrophyFactor = Math.max(0.0, 1.0 - gravityG);
+
     const aredRatio = Math.min(1.0, inputs.aredHoursPerDay / 2.2);
-    // NASA HRP BMD formula: monthly loss = -(1.5 - 1.25 * aredRatio)% per 30 days
-    const monthlyBmdLoss = -(1.5 - 1.25 * aredRatio);
+    // NASA HRP BMD formula: monthly loss = -(1.5 - 1.25 * aredRatio)% per 30 days, scaled by planetary gravity
+    const monthlyBmdLoss = -(1.5 - 1.25 * aredRatio) * gravityAtrophyFactor;
     const dailyBmdLoss = monthlyBmdLoss / 30;
 
     // VO2 max degradation based on ared + sleep debt + radiation
     const sleepFactor = Math.max(0, (7.0 - inputs.sleepHoursPerNight) * 0.05);
-    const radFatigueFactor = (inputs.dailyRadiation_mSv - 0.4) * 0.04;
-    const dailyVo2Loss = -(0.18 * (1.0 - aredRatio * 0.8) + sleepFactor + radFatigueFactor) / 30;
+    const radFatigueFactor = Math.max(0, inputs.dailyRadiation_mSv - 0.4) * 0.04;
+    const dailyVo2Loss = -(0.18 * (1.0 - aredRatio * 0.8) * (0.3 + 0.7 * gravityAtrophyFactor) + sleepFactor + radFatigueFactor) / 30;
 
-    // SANS ONSD progression
-    const dailyOnsdGain = (0.012 * (1.1 - aredRatio * 0.3) + (inputs.dailyRadiation_mSv > 1.2 ? 0.005 : 0));
+    // SANS ONSD progression (driven by microgravity fluid shift)
+    const dailyOnsdGain = (0.012 * (1.1 - aredRatio * 0.3) + (inputs.dailyRadiation_mSv > 1.2 ? 0.005 : 0)) * gravityAtrophyFactor;
 
     let currentBmd = 100.0;
     let currentVo2 = 100.0;
@@ -74,6 +81,7 @@ export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
 
     // Radiation accumulation baseline at currentDay
     let currentBfo = currentDay * inputs.dailyRadiation_mSv;
+    let cumulativeBfoVariance = 0;
 
     const totalDays = inputs.horizonDays;
     const step = 2; // Step every 2 days for smooth SVG
@@ -91,8 +99,8 @@ export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
       if (isStormDay) {
         // Unshielded peak nominal 150 mSv event vs. 20 g/cm² shelter attenuation (tau = 0.085)
         const stormDayDose = stormShelterEngaged 
-          ? (SPE_NOMINAL_PEAK_MSV_H * SHELTER_ATTENUATION_TAU) // ~12.75 mSv
-          : (SPE_NOMINAL_PEAK_MSV_H); // 150.0 mSv
+          ? (SPE_NOMINAL_EVENT_TOTAL_MSV * SHELTER_ATTENUATION_TAU) // ~12.75 mSv
+          : (SPE_NOMINAL_EVENT_TOTAL_MSV); // 150.0 mSv
         dayRate_mSv += (stormDayDose / (speStormDays * 2 + 1));
       }
 
@@ -107,7 +115,13 @@ export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
       const bmdSigma = sigmaFactor * 0.55;
       const vo2Sigma = sigmaFactor * 0.85;
       const onsdSigma = sigmaFactor * 0.04;
-      const bfoSigma = sigmaFactor * (isStormDay ? 5.5 : 1.2);
+
+      // Cumulative variance: monotonically non-decreasing stochastic accumulation
+      if (d > 0) {
+        const stepVariance = isStormDay ? (5.5 * 5.5) : (1.2 * 1.2);
+        cumulativeBfoVariance += stepVariance * step;
+      }
+      const bfoSigma = Math.sqrt(cumulativeBfoVariance) * 0.18;
 
       if (!osteopeniaDay && currentBmd <= 92.0) { // -8% loss
         osteopeniaDay = d;
@@ -184,7 +198,7 @@ export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
       projected30DayBfo: doseAtDay30,
       projectedFinalBfo: finalPoint.bfoCumulativeDose_mSv
     };
-  }, [inputs, stormShelterEngaged, speStormDays, currentDay]);
+  }, [inputs, stormShelterEngaged, speStormDays, currentDay, currentEnv]);
 
   // SVG Chart Dimensions
   const svgWidth = 640;
@@ -222,7 +236,8 @@ export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
     } else {
       // 'bfo' radiation tab
       minY = 0;
-      maxY = 320;
+      const maxProjectedDose = Math.max(...dataPoints.map(p => p.bfoUpperSigma));
+      maxY = Math.max(350, Math.ceil(maxProjectedDose / 50) * 50);
       threshold = NASA_30_DAY_BFO_LIMIT_MSV; // 250.0 mSv
       unit = 'mSv BFO';
     }
@@ -287,12 +302,15 @@ export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
             <Cpu className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-semibold text-slate-100">
                 GEMELO DIGITAL // PREDICCIÓN CLÍNICA WHAT-IF & RADIACIÓN BFO
               </span>
               <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-slate-400">
                 NASA HRP & NASA-STD-3001
+              </span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-950/40 border border-amber-500/30 text-amber-300">
+                SIMULATED VALUE // ILLUSTRATIVE MODEL
               </span>
             </div>
             <p className="text-xs text-slate-400">

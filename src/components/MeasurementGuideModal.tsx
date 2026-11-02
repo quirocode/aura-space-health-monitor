@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { BodyRegionId } from '../types';
 import { BODY_REGIONS } from '../config/clinicalThresholds';
 import { BookOpen, X, CheckSquare } from 'lucide-react';
@@ -12,6 +12,16 @@ export const MeasurementGuideModal: React.FC<MeasurementGuideModalProps> = ({
   regionId,
   onClose,
 }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   if (!regionId) return null;
   const region = BODY_REGIONS[regionId];
 
@@ -120,8 +130,16 @@ export const MeasurementGuideModal: React.FC<MeasurementGuideModalProps> = ({
   const guide = getMeasurementInstructions(regionId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-      <div className="hud-panel rounded-2xl max-w-lg w-full p-6 border border-cyan-500/40 text-slate-200 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+    >
+      <div 
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Guía de medición para tripulación: ${region.name}`}
+        className="hud-panel rounded-2xl max-w-lg w-full p-6 border border-cyan-500/40 text-slate-200 relative shadow-2xl max-h-[90vh] overflow-y-auto"
+      >
         {/* Header */}
         <div className="flex justify-between items-start mb-4 pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2">

@@ -32,6 +32,9 @@ export const CognitionPvtSuite: React.FC<CognitionPvtSuiteProps> = ({
   const timeoutIdRef = useRef<number | null>(null);
   const trialCountRef = useRef<number>(0);
   const maxTrials = 6; // Compact 30-45s battery for hackathon demo
+  const scheduleNextStimulusRef = useRef<() => void>(() => {});
+  const handleResponseRef = useRef<(isTimeout?: boolean) => void>(() => {});
+  const testStateRef = useRef<'idle' | 'waiting_stimulus' | 'stimulus_active' | 'completed'>(testState);
 
   const endTestSession = useCallback((finalTrials: PvtTrialResult[]) => {
     setTestState('completed');
@@ -82,9 +85,82 @@ export const CognitionPvtSuite: React.FC<CognitionPvtSuiteProps> = ({
     missionStorageService.savePvtSession(summary);
   }, [currentSleepHours]);
 
+  // Unmount cleanup for all active intervals and timeouts
+  useEffect(() => {
+    return () => {
+      if (timeoutIdRef.current) clearTimeout(timeoutIdRef.current);
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    };
+  }, []);
+
+  const handleResponse = useCallback((isTimeout: boolean = false) => {
+    const currentState = testStateRef.current;
+    if (currentState === 'waiting_stimulus') {
+      // False start (clicked before stimulus)
+      if (timeoutIdRef.current) clearTimeout(timeoutIdRef.current);
+
+      const falseStartTrial: PvtTrialResult = {
+        trialIndex: trialCountRef.current + 1,
+        stimulusDelay_ms: 0,
+        reactionTime_ms: 0,
+        isFalseStart: true,
+        isLapse: false
+      };
+
+      trialCountRef.current += 1;
+      setTrials(prev => {
+        const updated = [...prev, falseStartTrial];
+        if (trialCountRef.current >= maxTrials) {
+          endTestSession(updated);
+        } else {
+          scheduleNextStimulusRef.current();
+        }
+        return updated;
+      });
+      return;
+    }
+
+    if (currentState === 'stimulus_active' || isTimeout) {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+
+      const rt = isTimeout ? 1200 : Math.round(performance.now() - stimulusTimestampRef.current);
+      const isLapse = rt > 500;
+
+      const trial: PvtTrialResult = {
+        trialIndex: trialCountRef.current + 1,
+        stimulusDelay_ms: Math.round(stimulusTimestampRef.current),
+        reactionTime_ms: rt,
+        isFalseStart: false,
+        isLapse
+      };
+
+      trialCountRef.current += 1;
+      setTrials(prev => {
+        const updated = [...prev, trial];
+        if (trialCountRef.current >= maxTrials) {
+          endTestSession(updated);
+        } else {
+          scheduleNextStimulusRef.current();
+        }
+        return updated;
+      });
+    }
+  }, [endTestSession]);
+
+  useEffect(() => {
+    testStateRef.current = testState;
+  }, [testState]);
+
+  useEffect(() => {
+    handleResponseRef.current = handleResponse;
+  }, [handleResponse]);
+
   const scheduleNextStimulus = useCallback(() => {
     if (trialCountRef.current >= maxTrials) {
-      endTestSession(trials);
+      setTrials(prev => {
+        endTestSession(prev);
+        return prev;
+      });
       return;
     }
 
@@ -107,7 +183,11 @@ export const CognitionPvtSuite: React.FC<CognitionPvtSuiteProps> = ({
         }
       }, 16);
     }, randomDelay);
-  }, [trials, endTestSession]);
+  }, [handleResponse, endTestSession]);
+
+  useEffect(() => {
+    scheduleNextStimulusRef.current = scheduleNextStimulus;
+  }, [scheduleNextStimulus]);
 
   const startPvtTest = () => {
     trialCountRef.current = 0;
@@ -117,70 +197,19 @@ export const CognitionPvtSuite: React.FC<CognitionPvtSuiteProps> = ({
     scheduleNextStimulus();
   };
 
-  const handleResponse = (isTimeout: boolean = false) => {
-    if (testState === 'waiting_stimulus') {
-      // False start (clicked before stimulus)
-      if (timeoutIdRef.current) clearTimeout(timeoutIdRef.current);
-
-      const falseStartTrial: PvtTrialResult = {
-        trialIndex: trialCountRef.current + 1,
-        stimulusDelay_ms: 0,
-        reactionTime_ms: 0,
-        isFalseStart: true,
-        isLapse: false
-      };
-
-      trialCountRef.current += 1;
-      const updated = [...trials, falseStartTrial];
-      setTrials(updated);
-
-      if (trialCountRef.current >= maxTrials) {
-        endTestSession(updated);
-      } else {
-        scheduleNextStimulus();
-      }
-      return;
-    }
-
-    if (testState === 'stimulus_active' || isTimeout) {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-
-      const rt = isTimeout ? 1200 : Math.round(performance.now() - stimulusTimestampRef.current);
-      const isLapse = rt > 500;
-
-      const trial: PvtTrialResult = {
-        trialIndex: trialCountRef.current + 1,
-        stimulusDelay_ms: Math.round(stimulusTimestampRef.current),
-        reactionTime_ms: rt,
-        isFalseStart: false,
-        isLapse
-      };
-
-      trialCountRef.current += 1;
-      const updated = [...trials, trial];
-      setTrials(updated);
-
-      if (trialCountRef.current >= maxTrials) {
-        endTestSession(updated);
-      } else {
-        scheduleNextStimulus();
-      }
-    }
-  };
-
-  // Keyboard shortcut: Spacebar to respond
+  // Keyboard shortcut: Spacebar to respond (attached once with stable ref)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
         e.preventDefault();
-        if (testState === 'waiting_stimulus' || testState === 'stimulus_active') {
-          handleResponse();
+        if (testStateRef.current === 'waiting_stimulus' || testStateRef.current === 'stimulus_active') {
+          handleResponseRef.current();
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  });
+  }, []);
 
   const handleSaveToLog = () => {
     if (sessionSummary) {
@@ -215,7 +244,7 @@ export const CognitionPvtSuite: React.FC<CognitionPvtSuiteProps> = ({
 
         {testState !== 'idle' && (
           <div className="text-xs text-slate-400 tabular-telemetry">
-            ENSAYO: <strong className="text-slate-200">{trialCountRef.current}</strong> / {maxTrials}
+            ENSAYO: <strong className="text-slate-200">{trials.length}</strong> / {maxTrials}
           </div>
         )}
       </div>
