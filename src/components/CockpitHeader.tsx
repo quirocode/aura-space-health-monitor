@@ -49,6 +49,18 @@ export const CockpitHeader: React.FC<CockpitHeaderProps> = ({
             <span className="font-semibold">OFFLINE-FIRST (LOCAL)</span>
           </div>
 
+          {/* GitHub Repo Link */}
+          <a
+            href="https://github.com/quirocode/aura-space-health-monitor"
+            target="_blank"
+            rel="noreferrer"
+            title="Ver código fuente en GitHub"
+            className="bg-slate-900 border border-slate-700 px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-cyan-300 hover:border-cyan-500/40 transition-colors flex items-center gap-1.5"
+          >
+            <Compass className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline font-semibold">GitHub</span>
+          </a>
+
           {/* Sound Toggle */}
           <button
             onClick={onToggleMute}

@@ -259,13 +259,13 @@ export const App: React.FC = () => {
             <span>NASA HRP Evidence Baseline</span>
             <span>Local-First PWA</span>
             <a
-              href="https://github.com"
+              href="https://github.com/quirocode/aura-space-health-monitor"
               target="_blank"
               rel="noreferrer"
               className="hover:text-cyan-300 transition-colors flex items-center gap-1"
             >
               <ExternalLink className="w-4 h-4" />
-              <span>GitHub Open Source</span>
+              <span>GitHub Repo</span>
             </a>
           </div>
         </div>
