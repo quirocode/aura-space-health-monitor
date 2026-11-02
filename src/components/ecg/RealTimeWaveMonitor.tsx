@@ -170,8 +170,8 @@ export const RealTimeWaveMonitor: React.FC<RealTimeWaveMonitorProps> = ({
       ctx.fillStyle = '#050811';
       ctx.fillRect(nextX, 0, clearSliceWidth, height);
 
-      // Draw faint millimetric hospital grid inside the cleared slice
-      ctx.strokeStyle = 'rgba(6, 182, 212, 0.08)';
+      // Draw faint millimetric hospital grid inside the cleared slice (subdued avionics style)
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.07)';
       ctx.lineWidth = 1;
       for (let y = 0; y < height; y += 20) {
         ctx.beginPath();
@@ -348,50 +348,50 @@ export const RealTimeWaveMonitor: React.FC<RealTimeWaveMonitorProps> = ({
 
       {/* Telemetry Metrics Readout Banner */}
       <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-center font-mono">
-        <div className="bg-slate-900/90 border border-cyan-900/60 p-2.5 rounded-lg">
+        <div className="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
           <div className="text-[10px] text-slate-400 flex items-center justify-center gap-1">
             <Heart className="w-3 h-3 text-rose-400" /> FREC. CARDÍACA
           </div>
-          <div className={`text-xl font-bold ${
-            metrics.heartRate_bpm > 120 ? 'text-rose-400 animate-pulse' : 'text-emerald-300'
+          <div className={`text-xl font-semibold tabular-telemetry ${
+            metrics.heartRate_bpm > 120 ? 'text-rose-400 animate-pulse' : 'text-slate-100'
           }`}>
             {metrics.heartRate_bpm} <span className="text-xs font-normal text-slate-400">lpm</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/90 border border-cyan-900/60 p-2.5 rounded-lg">
+        <div className="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
           <div className="text-[10px] text-slate-400">INTERVALO PR</div>
-          <div className="text-lg font-bold text-cyan-300">
+          <div className="text-lg font-semibold text-slate-200 tabular-telemetry">
             {metrics.prInterval_ms} <span className="text-xs font-normal text-slate-400">ms</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/90 border border-cyan-900/60 p-2.5 rounded-lg">
+        <div className="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
           <div className="text-[10px] text-slate-400">DURACIÓN QRS</div>
-          <div className={`text-lg font-bold ${
-            metrics.qrsDuration_ms > 120 ? 'text-amber-400' : 'text-cyan-300'
+          <div className={`text-lg font-semibold tabular-telemetry ${
+            metrics.qrsDuration_ms > 120 ? 'text-amber-400' : 'text-slate-200'
           }`}>
             {metrics.qrsDuration_ms} <span className="text-xs font-normal text-slate-400">ms</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/90 border border-cyan-900/60 p-2.5 rounded-lg">
+        <div className="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
           <div className="text-[10px] text-slate-400">INTERVALO QTc</div>
-          <div className="text-lg font-bold text-cyan-300">
+          <div className="text-lg font-semibold text-slate-200 tabular-telemetry">
             {metrics.qtc_ms} <span className="text-xs font-normal text-slate-400">ms</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/90 border border-cyan-900/60 p-2.5 rounded-lg">
+        <div className="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
           <div className="text-[10px] text-slate-400">SATURACIÓN SpO2</div>
-          <div className="text-lg font-bold text-emerald-300">
+          <div className="text-lg font-semibold text-emerald-400 tabular-telemetry">
             {metrics.spo2_percent}%
           </div>
         </div>
 
-        <div className="bg-slate-900/90 border border-cyan-900/60 p-2.5 rounded-lg">
+        <div className="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
           <div className="text-[10px] text-slate-400">ÍNDICE PERFUSIÓN</div>
-          <div className="text-lg font-bold text-cyan-300">
+          <div className="text-lg font-semibold text-slate-200 tabular-telemetry">
             {metrics.perfusionIndex}
           </div>
         </div>

@@ -35,36 +35,37 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         thresholds.maxCaution
       );
 
+  // Dark Cockpit Standard: Color by exception
   const getStatusColor = () => {
     switch (status) {
       case 'nominal':
         return {
-          border: 'border-cyan-500/30',
-          badge: 'bg-cyan-950/70 text-cyan-300 border-cyan-500/40',
-          sparkline: '#06b6d4',
-          glow: 'rgba(6, 182, 212, 0.15)'
+          border: 'border-white/[0.08] hover:border-slate-700',
+          badge: 'bg-slate-900 text-slate-300 border-slate-800',
+          indicatorDot: 'bg-emerald-500',
+          sparkline: '#38bdf8',
         };
       case 'caution':
         return {
-          border: 'border-amber-500/40',
-          badge: 'bg-amber-950/70 text-amber-300 border-amber-500/40',
+          border: 'border-amber-500/40 bg-amber-950/10',
+          badge: 'bg-amber-950/60 text-amber-300 border-amber-500/40',
+          indicatorDot: 'bg-amber-400',
           sparkline: '#f59e0b',
-          glow: 'rgba(245, 158, 11, 0.2)'
         };
       case 'critical':
         return {
-          border: 'border-rose-500/50',
+          border: 'border-rose-500/60 bg-rose-950/15',
           badge: 'bg-rose-950/70 text-rose-300 border-rose-500/50',
-          sparkline: '#f43f5e',
-          glow: 'rgba(244, 63, 94, 0.25)'
+          indicatorDot: 'bg-rose-500',
+          sparkline: '#ef4444',
         };
     }
   };
 
   const style = getStatusColor();
 
-  // Generate lightweight SVG sparkline from the history
-  const points = history.slice(-20); // Last 20 days
+  // Generate lightweight SVG sparkline from history (thin 1.5px stroke)
+  const points = history.slice(-20);
   const values = points.map((p) => Number(p[metricKey]) || 0);
   const minVal = Math.min(...values, thresholds.minCaution);
   const maxVal = Math.max(...values, thresholds.maxCaution);
@@ -73,77 +74,71 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   const sparklinePoints = values
     .map((val, idx) => {
       const x = (idx / (values.length - 1 || 1)) * 120;
-      const y = 36 - ((val - minVal) / range) * 30;
+      const y = 34 - ((val - minVal) / range) * 26;
       return `${x},${y}`;
     })
     .join(' ');
 
   return (
-    <div className={`hud-panel rounded-xl p-3.5 border ${style.border} text-slate-200 transition-all hover:translate-y-[-2px] flex flex-col justify-between relative overflow-hidden group`}>
-      {/* Background Glow */}
-      <div 
-        className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full pointer-events-none opacity-20 filter blur-xl"
-        style={{ backgroundColor: style.sparkline }}
-      ></div>
-
+    <div className={`hud-panel rounded-xl p-3.5 border ${style.border} text-slate-200 transition-all flex flex-col justify-between relative select-none`}>
       <div>
-        {/* Card Header */}
-        <div className="flex justify-between items-start mb-1.5">
+        {/* Card Header: Title & Info */}
+        <div className="flex justify-between items-center mb-1">
           <div className="flex items-center gap-1.5 text-slate-400 text-xs font-mono">
             {icon}
-            <span className="font-semibold text-slate-300">{title}</span>
+            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-medium">{title}</span>
           </div>
           {onOpenInfo && (
             <button
               onClick={onOpenInfo}
               title="Explicación clínica y fuente"
-              className="text-slate-500 hover:text-cyan-300 transition-colors p-0.5"
+              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
             >
               <Info className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
-        {/* Current Big Value */}
+        {/* Current Value with Tabular Numerics */}
         <div className="flex items-baseline gap-1.5 my-1">
-          <span className="text-2xl font-bold font-mono tracking-tight text-white">{value}</span>
-          <span className="text-xs font-mono text-cyan-400/80">{unit}</span>
+          <span className="text-2xl font-semibold font-mono tracking-tight text-slate-100 tabular-telemetry">
+            {value}
+          </span>
+          <span className="text-xs font-mono text-slate-400">{unit}</span>
         </div>
       </div>
 
-      {/* SVG Sparkline & Mini Timeline */}
-      <div className="my-2 h-10 w-full flex items-center justify-between">
-        <svg viewBox="0 0 120 40" className="w-full h-full overflow-visible">
+      {/* Clean Minimalist Sparkline */}
+      <div className="my-1.5 h-8 w-full flex items-center">
+        <svg viewBox="0 0 120 38" className="w-full h-full overflow-visible">
           <polyline
             fill="none"
             stroke={style.sparkline}
-            strokeWidth="1.8"
+            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             points={sparklinePoints}
           />
-          {/* Last Point Pulse */}
           {values.length > 0 && (
             <circle
               cx="120"
-              cy={36 - ((values[values.length - 1] - minVal) / range) * 30}
-              r="2.5"
-              fill="#ffffff"
-              stroke={style.sparkline}
-              strokeWidth="1.5"
+              cy={34 - ((values[values.length - 1] - minVal) / range) * 26}
+              r="2"
+              fill={style.sparkline}
             />
           )}
         </svg>
       </div>
 
-      {/* Footer: Environment Reference Range & Status Badge */}
-      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
-        <span className="text-slate-400 truncate max-w-[150px]" title={thresholds.sourceNote}>
-          Ref: {thresholds.minNominal} - {thresholds.maxNominal}
+      {/* Footer: Environment Reference & Status Badge */}
+      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
+        <span className="text-slate-500 truncate max-w-[120px]" title={thresholds.sourceNote}>
+          Ref: {thresholds.minNominal}-{thresholds.maxNominal}
         </span>
-        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${style.badge}`}>
-          {status === 'nominal' ? 'NOMINAL' : status === 'caution' ? 'DERIVA' : 'CRÍTICO'}
-        </span>
+        <div className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${style.badge} flex items-center gap-1.5`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${style.indicatorDot}`} />
+          <span>{status === 'nominal' ? 'NOMINAL' : status === 'caution' ? 'DERIVA' : 'CRÍTICO'}</span>
+        </div>
       </div>
     </div>
   );

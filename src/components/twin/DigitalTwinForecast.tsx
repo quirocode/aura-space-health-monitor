@@ -206,20 +206,20 @@ export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
   }, [dataPoints, activeMetricTab, inputs.horizonDays, chartW, chartH]);
 
   return (
-    <div className="hud-panel rounded-2xl border border-cyan-500/40 p-4 sm:p-6 bg-slate-950/90 text-white font-mono space-y-4 shadow-[0_0_30px_rgba(6,182,212,0.15)]">
+    <div className="hud-panel rounded-2xl border border-white/[0.08] p-4 sm:p-5 bg-slate-950/85 text-slate-100 font-mono space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-cyan-900/60 pb-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-purple-950/80 border border-purple-500/50 flex items-center justify-center text-purple-300">
-            <Cpu className="w-5 h-5 animate-pulse" />
+          <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-purple-400">
+            <Cpu className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-purple-300">
+              <span className="font-mono text-xs font-semibold text-slate-100">
                 GEMELO DIGITAL // PREDICCIÓN CLÍNICA WHAT-IF
               </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-950 border border-purple-500/40 text-purple-300">
-                PREDICTIVE SANDBOX
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-slate-400">
+                NASA HRP MODEL
               </span>
             </div>
             <p className="text-xs text-slate-400">
@@ -235,10 +235,10 @@ export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
             <button
               key={d}
               onClick={() => setInputs(prev => ({ ...prev, horizonDays: d }))}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 inputs.horizonDays === d
-                  ? 'bg-purple-600 text-white shadow-[0_0_12px_rgba(168,85,247,0.4)]'
-                  : 'bg-slate-900 border border-slate-700 text-slate-400 hover:text-white'
+                  ? 'bg-slate-800 text-purple-300 border border-slate-700'
+                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
               }`}
             >
               +{d}d
@@ -253,11 +253,11 @@ export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
           onClick={() => setActiveMetricTab('bmd')}
           className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 transition-all ${
             activeMetricTab === 'bmd'
-              ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 font-bold'
-              : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
+              ? 'bg-slate-800 border-slate-700 text-sky-400 font-semibold'
+              : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
           }`}
         >
-          <Bone className="w-3.5 h-3.5 text-cyan-400" />
+          <Bone className="w-3.5 h-3.5 text-sky-400" />
           <span>1. Densidad Mineral Ósea (BMD)</span>
         </button>
 
@@ -265,8 +265,8 @@ export const DigitalTwinForecast: React.FC<DigitalTwinForecastProps> = ({
           onClick={() => setActiveMetricTab('vo2')}
           className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 transition-all ${
             activeMetricTab === 'vo2'
-              ? 'bg-purple-500/20 border-purple-400 text-purple-200 font-bold'
-              : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
+              ? 'bg-slate-800 border-slate-700 text-purple-400 font-semibold'
+              : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
           }`}
         >
           <Activity className="w-3.5 h-3.5 text-purple-400" />

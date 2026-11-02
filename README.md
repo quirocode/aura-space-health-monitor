@@ -1,7 +1,8 @@
-# AURA-EIMO v2.0 🚀 | Global Winner Edition
+# AURA-EIMO v2.5 🚀 | Calm Aerospace Ergonomics & Dark Cockpit Edition
 > **NASA International Space Apps Challenge 2026**  
 > **Reto:** *"Create Health Monitoring Software for Astronauts on Space Missions"*  
 > **Sede:** Lima, Perú & Global  
+> **Norma de Diseño:** NASA-STD-3001 Vol. 2 (Displays & Controls) + Dark Cockpit Standard (SpaceX Crew Dragon / Orion)  
 > **🌐 Demo en Vivo (Acceso Público en Producción):** [https://quirocode.github.io/aura-space-health-monitor/](https://quirocode.github.io/aura-space-health-monitor/)  
 > **📦 Repositorio Oficial:** [https://github.com/quirocode/aura-space-health-monitor](https://github.com/quirocode/aura-space-health-monitor)  
 
@@ -9,7 +10,13 @@
 
 ## 🛰️ 1. Descripción del Proyecto
 
-**AURA-EIMO** (*Autonomous Ultrasound & Resilience Assistant for Earth-Independent Medical Operations*) es una plataforma médica de cabina espacial (**PWA, 100% Offline-First**) diseñada para empoderar a los astronautas en misiones de espacio profundo (Artemis en la Luna, Gateway y tránsito/superficie de Marte) mediante auto-evaluación visual, triaje asistido, visión por computadora para ecografía y prescripción de contramedidas inmediatas sin depender de telemedicina terrestre en tiempo real.
+**AURA-EIMO** (*Autonomous Ultrasound & Resilience Assistant for Earth-Independent Medical Operations*) es una plataforma médica de cabina espacial (**PWA, 100% Offline-First**) diseñada bajo la filosofía de **Dark Cockpit y Revelación Progresiva** para eliminar la sobre-estimulación y fatiga cognitiva de la tripulación en misiones de espacio profundo (Artemis en la Luna, Gateway y tránsito/superficie de Marte).
+
+La interfaz está organizada en **4 Estaciones de Trabajo (Workspaces)** limpias y ergonómicas que impiden el scroll vertical caótico y concentran la atención del astronauta en la tarea clínica activa:
+1. `🛰️ Estación 1: Vigilancia & Bio-Holograma` (Layout 3 columnas: Holograma 3D + 8 Métricas en `tabular-nums` + Triaje autónomo y checklist).
+2. `⚡ Estación 2: Diagnóstico en Vivo` (Monitor ECG 60 FPS + Ecógrafo POCUS Edge-AI lado a lado con lienzo expandido).
+3. `🧬 Estación 3: Gemelo Predictivo` (Sandbox clínico a 30/60/90 días con conos de incertidumbre $\pm 1\sigma$).
+4. `🛡️ Estación 4: Traje Espacial EVA` (HUD OLED reflectivo de alto contraste para casco xEMU).
 
 Debido al retraso insalvable en comunicaciones por radio (**~1.3 s en la Luna; 4 a 24 minutos por sentido en Marte**), las tripulaciones espaciales deben asumir el rol de agentes médicos autónomos (**EIMO - Earth-Independent Medical Operations, NASA Level of Care IV/V**).
 

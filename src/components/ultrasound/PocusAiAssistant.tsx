@@ -24,7 +24,7 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scanMode, setScanMode] = useState<PocusScanMode>('ocular_sans');
   const [transducerAngle, setTransducerAngle] = useState<number>(0); // -15 to +15 deg
-  const [simulatedOnsd, setSimulatedOnsd] = useState<number>(5.92); // Start at critical to showcase SANS
+  const [simulatedOnsd, setSimulatedOnsd] = useState<number>(5.92); // Default to demonstrate SANS
   const [uploadedImage, setUploadedImage] = useState<HTMLImageElement | null>(null);
   const [measurement, setMeasurement] = useState<PocusCaliperMeasurement>({
     onsd_mm: 5.92,
@@ -110,21 +110,20 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const w = (canvas.width = canvas.parentElement?.clientWidth || 700);
+    const w = (canvas.width = canvas.parentElement?.clientWidth || 600);
     const h = (canvas.height = 380);
 
     // Deep acoustic background
-    ctx.fillStyle = '#03050c';
+    ctx.fillStyle = '#050811';
     ctx.fillRect(0, 0, w, h);
 
     if (uploadedImage) {
-      // Draw uploaded user image fitted to canvas
       ctx.drawImage(uploadedImage, 0, 0, w, h);
     } else {
       // Procedural Sector Fan
       const originX = w / 2 + (transducerAngle * 4.5);
-      const originY = 30;
-      const radius = h * 0.88;
+      const originY = 25;
+      const radius = h * 0.90;
       const startAngle = Math.PI * 0.35 + (transducerAngle * 0.02);
       const endAngle = Math.PI * 0.65 + (transducerAngle * 0.02);
 
@@ -145,18 +144,17 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
       const data = imgData.data;
       for (let i = 0; i < data.length; i += 4) {
         if (Math.random() > 0.45) {
-          const brightness = Math.floor(Math.random() * 65);
+          const brightness = Math.floor(Math.random() * 60);
           data[i] = brightness;
           data[i + 1] = brightness + 10;
-          data[i + 2] = brightness + 25;
-          data[i + 3] = 160;
+          data[i + 2] = brightness + 22;
+          data[i + 3] = 150;
         }
       }
       ctx.putImageData(imgData, 0, 0);
 
       if (scanMode === 'ocular_sans') {
         // --- OCULAR B-SCAN PROCEDURAL SHAPES ---
-        // 1. Anechoic Eyeball Globe (Dark sphere)
         const eyeCx = originX;
         const eyeCy = originY + 140;
         const eyeRadius = 75;
@@ -171,14 +169,14 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
         ctx.arc(eyeCx, eyeCy, eyeRadius, 0, Math.PI * 2);
         ctx.fill();
 
-        // 2. Retrobulbar Fat (Hyperechoic speckled crescent behind globe)
+        // Retrobulbar Fat (Hyperechoic crescent)
         ctx.strokeStyle = 'rgba(210, 240, 255, 0.75)';
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(eyeCx, eyeCy, eyeRadius + 2, Math.PI * 0.2, Math.PI * 0.8);
         ctx.stroke();
 
-        // 3. Optic Nerve Sheath Acoustic Shadow (Dark vertical column at 3.0 mm)
+        // Optic Nerve Sheath Acoustic Shadow (Dark vertical column at 3.0 mm)
         const sheathWidthPx = (simulatedOnsd / 3.0) * 16;
         const sheathTopY = eyeCy + eyeRadius + 4;
         const sheathHeight = 110;
@@ -189,8 +187,8 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
         ctx.fill();
 
         // Hyperechoic sheath borders (dura mater)
-        ctx.strokeStyle = 'rgba(165, 243, 252, 0.7)';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(165, 243, 252, 0.65)';
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
         ctx.moveTo(eyeCx - sheathWidthPx / 2, sheathTopY);
         ctx.lineTo(eyeCx - sheathWidthPx / 2, sheathTopY + sheathHeight);
@@ -203,22 +201,19 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
         const lvCx = originX;
         const lvCy = originY + 170;
 
-        // Ventricular cavity (Anechoic)
         ctx.fillStyle = 'rgba(3, 7, 18, 0.9)';
         ctx.beginPath();
         ctx.ellipse(lvCx, lvCy, 100, 55, -0.2, 0, Math.PI * 2);
         ctx.fill();
 
-        // Interventricular septum (Myocardium)
-        ctx.strokeStyle = 'rgba(125, 211, 252, 0.65)';
-        ctx.lineWidth = 14;
+        ctx.strokeStyle = 'rgba(125, 211, 252, 0.6)';
+        ctx.lineWidth = 12;
         ctx.beginPath();
         ctx.ellipse(lvCx - 20, lvCy - 45, 90, 25, -0.2, 0, Math.PI);
         ctx.stroke();
 
-        // Mitral valve leaflets (flickering motion)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(lvCx + 30, lvCy - 10);
         ctx.lineTo(lvCx + 55, lvCy + 15);
@@ -233,7 +228,7 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
     const boxColor = !isAligned 
       ? '#f59e0b' 
       : simulatedOnsd > 5.8 
-        ? '#f43f5e' 
+        ? '#ef4444' 
         : '#10b981';
 
     const boxX = w / 2 - 110 + (transducerAngle * 4);
@@ -243,17 +238,17 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
 
     // AI Bounding Box
     ctx.strokeStyle = boxColor;
-    ctx.lineWidth = 1.8;
-    ctx.setLineDash([6, 3]);
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([5, 3]);
     ctx.strokeRect(boxX, boxY, boxW, boxH);
     ctx.setLineDash([]);
 
     // AI Tag Label
     ctx.fillStyle = boxColor;
-    ctx.fillRect(boxX, boxY - 22, 180, 22);
+    ctx.fillRect(boxX, boxY - 20, 160, 20);
     ctx.fillStyle = '#050811';
-    ctx.font = 'bold 11px monospace';
-    ctx.fillText(`EDGE AI: ${(measurement.confidenceScore * 100).toFixed(1)}% CONF`, boxX + 6, boxY - 7);
+    ctx.font = 'bold 10px monospace';
+    ctx.fillText(`AI CONF: ${(measurement.confidenceScore * 100).toFixed(1)}%`, boxX + 6, boxY - 6);
 
     // Digital Calipers (3.0 mm retrobulbar mark)
     const caliperY = boxY + 55;
@@ -262,45 +257,33 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
 
     // Horizontal measurement bar
     ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
     ctx.moveTo(caliperCx - caliperHalfW, caliperY);
     ctx.lineTo(caliperCx + caliperHalfW, caliperY);
     ctx.stroke();
 
-    // Left and Right Caliper Crosses (+)
+    // Caliper Crosses
     const drawCross = (x: number, y: number) => {
       ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.moveTo(x - 5, y);
-      ctx.lineTo(x + 5, y);
-      ctx.moveTo(x, y - 5);
-      ctx.lineTo(x, y + 5);
+      ctx.moveTo(x - 4, y);
+      ctx.lineTo(x + 4, y);
+      ctx.moveTo(x, y - 4);
+      ctx.lineTo(x, y + 4);
       ctx.stroke();
     };
     drawCross(caliperCx - caliperHalfW, caliperY);
     drawCross(caliperCx + caliperHalfW, caliperY);
 
-    // Callout text with exact millimetric measurement
+    // Callout text with exact measurement
     ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 12px monospace';
-    ctx.fillText(`ONSD: ${simulatedOnsd.toFixed(2)} mm`, caliperCx - 40, caliperY - 12);
-    ctx.font = '10px monospace';
+    ctx.font = 'bold 11px monospace';
+    ctx.fillText(`ONSD: ${simulatedOnsd.toFixed(2)} mm`, caliperCx - 36, caliperY - 10);
+    ctx.font = '9px monospace';
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText(`@ 3.0 mm RETROBULBAR`, caliperCx - 55, caliperY + 22);
-
-    // Transducer Orientation Reticle
-    ctx.strokeStyle = isAligned ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.5)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(w / 2, 25, 18, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.moveTo(w / 2 - 24, 25);
-    ctx.lineTo(w / 2 + 24, 25);
-    ctx.moveTo(w / 2, 1);
-    ctx.lineTo(w / 2, 49);
-    ctx.stroke();
+    ctx.fillText(`@ 3.0 mm RETROBULBAR`, caliperCx - 50, caliperY + 20);
   }, [uploadedImage, transducerAngle, scanMode, simulatedOnsd, measurement.confidenceScore]);
 
   useEffect(() => {
@@ -308,47 +291,47 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
   }, [drawUltrasoundFrame]);
 
   return (
-    <div className="hud-panel rounded-2xl border border-cyan-500/40 p-4 sm:p-6 bg-slate-950/90 text-white space-y-4 shadow-[0_0_30px_rgba(6,182,212,0.15)]">
+    <div className="hud-panel rounded-2xl border border-white/[0.08] p-4 sm:p-5 bg-slate-950/85 text-slate-100 space-y-4">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-cyan-900/60 pb-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-cyan-950/80 border border-cyan-500/50 flex items-center justify-center text-cyan-300">
-            <Camera className="w-5 h-5 animate-pulse" />
+          <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-sky-400">
+            <Camera className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-cyan-300">
-                POCUS ASISTIDO POR EDGE-AI // BUTTERFLY iQ
+              <span className="font-mono text-xs font-semibold text-slate-100">
+                POCUS ASISTIDO POR EDGE-AI
               </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-300">
-                AUTONOMOUS PROTOCOL
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-slate-400">
+                BUTTERFLY iQ PROTOCOL
               </span>
             </div>
             <p className="text-xs text-slate-400 font-mono">
-              Calibrador milimétrico automatizado para SANS y función cardíaca
+              Calibrador milimétrico automatizado para SANS y función hemodinámica
             </p>
           </div>
         </div>
 
         {/* Scan Mode Switcher */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 font-mono text-xs">
           <button
             onClick={() => setScanMode('ocular_sans')}
-            className={`px-3 py-1.5 rounded-lg border font-mono text-xs flex items-center gap-1.5 transition-all ${
+            className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 transition-all ${
               scanMode === 'ocular_sans'
-                ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 font-bold'
-                : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
+                ? 'bg-slate-800 border-slate-700 text-sky-400 font-semibold'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
             }`}
           >
-            <Eye className="w-3.5 h-3.5 text-cyan-400" />
+            <Eye className="w-3.5 h-3.5 text-sky-400" />
             <span>1. B-Scan Ocular (SANS)</span>
           </button>
           <button
             onClick={() => setScanMode('parasternal_echo')}
-            className={`px-3 py-1.5 rounded-lg border font-mono text-xs flex items-center gap-1.5 transition-all ${
+            className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 transition-all ${
               scanMode === 'parasternal_echo'
-                ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 font-bold'
-                : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
+                ? 'bg-slate-800 border-slate-700 text-sky-400 font-semibold'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
             }`}
           >
             <Heart className="w-3.5 h-3.5 text-rose-400" />
@@ -357,108 +340,113 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
         </div>
       </div>
 
-      {/* Guidance Feedback Strip */}
-      <div className={`p-3 rounded-xl border flex items-center justify-between gap-3 font-mono text-xs transition-all ${
+      {/* Guidance Feedback Strip (Color by exception) */}
+      <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 font-mono text-xs ${
         !measurement.transducerAligned
-          ? 'bg-amber-950/40 border-amber-500/60 text-amber-200'
+          ? 'bg-amber-950/20 border-amber-500/40 text-amber-200'
           : measurement.status === 'critical'
-            ? 'bg-rose-950/40 border-rose-500/60 text-rose-200'
-            : 'bg-emerald-950/40 border-emerald-500/60 text-emerald-200'
+            ? 'bg-rose-950/20 border-rose-500/40 text-rose-200'
+            : 'bg-slate-900/60 border-slate-800 text-slate-300'
       }`}>
         <div className="flex items-center gap-2">
           {!measurement.transducerAligned ? (
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 animate-bounce" />
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
           ) : measurement.status === 'critical' ? (
-            <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 animate-pulse" />
+            <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
           ) : (
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           )}
-          <span className="font-bold">{measurement.feedbackMessage}</span>
+          <span className="font-semibold text-xs">{measurement.feedbackMessage}</span>
         </div>
-        <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-400">
+        <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-400 tabular-telemetry">
           <span>ÁNGULO: {transducerAngle > 0 ? `+${transducerAngle}` : transducerAngle}°</span>
           <span>|</span>
           <span>ONSD: {simulatedOnsd.toFixed(2)} mm</span>
         </div>
       </div>
 
-      {/* Main Ultrasound Screen */}
-      <div className="relative rounded-xl overflow-hidden border border-cyan-900/80 bg-[#03050c]">
-        {/* Reticle Overlay Banner */}
-        <div className="absolute top-3 left-4 pointer-events-none flex items-center gap-2 text-xs font-mono">
-          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
-          <span className="text-cyan-300 font-bold">
-            {scanMode === 'ocular_sans' ? 'MODO B: GLOBO OCULAR & NERVIO ÓPTICO' : 'MODO ECO: EJE LARGO PARASTERNAL'}
-          </span>
-        </div>
-
-        {/* Transducer Angle Indicator */}
-        <div className="absolute bottom-3 left-4 pointer-events-none bg-slate-900/80 border border-slate-700/80 px-2.5 py-1 rounded text-[11px] font-mono text-cyan-300">
-          TRANS: {transducerAngle}° // PROFUNDIDAD: 4.5 cm
-        </div>
-
-        <canvas
-          ref={canvasRef}
-          className="w-full block"
-          style={{ height: '380px' }}
-        />
-      </div>
-
-      {/* Interactive Controls & Calibration Deck */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-        {/* Left: Transducer Angle & SANS Slider */}
-        <div className="space-y-3 bg-slate-900/60 p-3.5 rounded-xl border border-cyan-900/60 font-mono text-xs">
-          <div className="flex items-center justify-between">
-            <label className="text-slate-300 flex items-center gap-1.5 font-bold">
-              <Sliders className="w-3.5 h-3.5 text-cyan-400" />
-              Ángulo del Transductor Butterfly iQ (-15° a +15°):
-            </label>
-            <span className={`font-bold ${Math.abs(transducerAngle) <= 3 ? 'text-emerald-400' : 'text-amber-400'}`}>
-              {transducerAngle > 0 ? `+${transducerAngle}` : transducerAngle}°
+      {/* Main Dual-Column Workspace: Canvas Left (7 cols), Controls Right (5 cols) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Ultrasound Canvas (7 cols) */}
+        <div className="lg:col-span-7 relative rounded-xl overflow-hidden border border-slate-800 bg-[#050811] flex flex-col justify-center">
+          <div className="absolute top-3 left-4 pointer-events-none flex items-center gap-2 text-xs font-mono">
+            <span className="w-2 h-2 rounded-full bg-sky-400" />
+            <span className="text-slate-300 font-semibold text-[11px]">
+              {scanMode === 'ocular_sans' ? 'MODO B: GLOBO OCULAR & NERVIO ÓPTICO' : 'MODO ECO: EJE LARGO PARASTERNAL'}
             </span>
           </div>
-          <input
-            type="range"
-            min="-15"
-            max="15"
-            step="1"
-            value={transducerAngle}
-            onChange={(e) => setTransducerAngle(parseInt(e.target.value, 10))}
-            className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
+
+          <canvas
+            ref={canvasRef}
+            className="w-full block"
+            style={{ height: '380px' }}
           />
 
-          <div className="flex items-center justify-between pt-1">
-            <label className="text-slate-300 flex items-center gap-1.5 font-bold">
-              <Eye className="w-3.5 h-3.5 text-cyan-400" />
-              Simular Diámetro Vaina Nervio Óptico (ONSD):
-            </label>
-            <span className={`font-bold ${
-              simulatedOnsd > 5.8 ? 'text-rose-400' : simulatedOnsd >= 5.2 ? 'text-amber-400' : 'text-emerald-400'
-            }`}>
-              {simulatedOnsd.toFixed(2)} mm
-            </span>
+          <div className="absolute bottom-3 left-4 pointer-events-none bg-slate-950/80 border border-slate-800 px-2.5 py-1 rounded text-[10px] font-mono text-slate-400">
+            TRANS: {transducerAngle}° // PROFUNDIDAD: 4.5 cm
           </div>
-          <input
-            type="range"
-            min="4.5"
-            max="6.8"
-            step="0.05"
-            value={simulatedOnsd}
-            onChange={(e) => setSimulatedOnsd(parseFloat(e.target.value))}
-            className="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer"
-          />
         </div>
 
-        {/* Right: Actions, Image Upload and SANS Injection */}
-        <div className="space-y-3 bg-slate-900/60 p-3.5 rounded-xl border border-cyan-900/60 font-mono text-xs flex flex-col justify-between">
-          <div>
-            <div className="text-slate-300 font-bold mb-1.5 flex items-center gap-1.5">
-              <Upload className="w-3.5 h-3.5 text-cyan-400" />
-              Carga de Ultrasonido Local o Reset:
+        {/* Controls & Metrics Column (5 cols) */}
+        <div className="lg:col-span-5 space-y-3 flex flex-col justify-between font-mono text-xs">
+          {/* Sliders Card */}
+          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-slate-300 flex items-center gap-1.5 font-medium">
+                  <Sliders className="w-3.5 h-3.5 text-sky-400" />
+                  Ángulo del Transductor Butterfly iQ:
+                </label>
+                <span className={`font-semibold tabular-telemetry ${Math.abs(transducerAngle) <= 3 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {transducerAngle > 0 ? `+${transducerAngle}` : transducerAngle}°
+                </span>
+              </div>
+              <input
+                type="range"
+                min="-15"
+                max="15"
+                step="1"
+                value={transducerAngle}
+                onChange={(e) => setTransducerAngle(parseInt(e.target.value, 10))}
+                className="w-full accent-sky-400 bg-slate-800 rounded-lg cursor-pointer"
+              />
+              <div className="text-[10px] text-slate-500">Alineación nominal dentro de ±3°</div>
+            </div>
+
+            <div className="space-y-1.5 pt-2 border-t border-slate-800">
+              <div className="flex items-center justify-between">
+                <label className="text-slate-300 flex items-center gap-1.5 font-medium">
+                  <Eye className="w-3.5 h-3.5 text-sky-400" />
+                  Simular Diámetro Vaina Ocular (ONSD):
+                </label>
+                <span className={`font-semibold tabular-telemetry ${
+                  simulatedOnsd > 5.8 ? 'text-rose-400' : simulatedOnsd >= 5.2 ? 'text-amber-400' : 'text-emerald-400'
+                }`}>
+                  {simulatedOnsd.toFixed(2)} mm
+                </span>
+              </div>
+              <input
+                type="range"
+                min="4.5"
+                max="6.8"
+                step="0.05"
+                value={simulatedOnsd}
+                onChange={(e) => setSimulatedOnsd(parseFloat(e.target.value))}
+                className="w-full accent-sky-400 bg-slate-800 rounded-lg cursor-pointer"
+              />
+              <div className="text-[10px] text-slate-500">Umbral SANS: &gt; 5.80 mm crítico</div>
+            </div>
+          </div>
+
+          {/* Upload & Actions Card */}
+          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
+            <div className="text-slate-300 font-medium flex items-center gap-1.5">
+              <Upload className="w-3.5 h-3.5 text-sky-400" />
+              <span>Cargar Imagen Propia de Ultrasonido:</span>
             </div>
             <div className="flex items-center gap-2">
-              <label className="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500/50 text-slate-200 py-1.5 px-3 rounded-lg text-center cursor-pointer transition-colors">
-                <span>Subir Ultrasonido Propio (.png/.jpg)</span>
+              <label className="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 py-1.5 px-3 rounded-lg text-center cursor-pointer transition-colors text-xs">
+                <span>Seleccionar archivo (.png/.jpg)</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -468,43 +456,43 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
               </label>
               <button
                 onClick={handleResetScan}
-                title="Reiniciar a escaneo sintético"
+                title="Reiniciar escaneo"
                 className="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded-lg text-slate-400 hover:text-white transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
             </div>
-          </div>
 
-          {/* Trigger Clinical Escalation Button */}
-          <button
-            onClick={handleInjectAlert}
-            className={`w-full py-2.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-              simulatedOnsd > 5.8
-                ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]'
-                : 'bg-cyan-600 hover:bg-cyan-500 text-white'
-            }`}
-          >
-            <ShieldAlert className="w-4 h-4" />
-            <span>
-              {injectedSuccess
-                ? '¡HALLAZGO INYECTADO AL TRIAJE Y PROTOCOLO LBNP!'
-                : simulatedOnsd > 5.8
-                  ? 'Inyectar Hallazgo Crítico SANS a Triaje & Activar LBNP'
-                  : 'Registrar Medición Nominal de Nervio Óptico'}
-            </span>
-          </button>
+            {/* Trigger Clinical Escalation Button */}
+            <button
+              onClick={handleInjectAlert}
+              className={`w-full py-2.5 px-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
+                simulatedOnsd > 5.8
+                  ? 'bg-rose-600 hover:bg-rose-500 text-white'
+                  : 'bg-sky-600 hover:bg-sky-500 text-white'
+              }`}
+            >
+              <ShieldAlert className="w-4 h-4" />
+              <span>
+                {injectedSuccess
+                  ? '¡HALLAZGO SANS REGISTRADO EN TRIAJE!'
+                  : simulatedOnsd > 5.8
+                    ? 'Inyectar Hallazgo Crítico SANS & Activar LBNP'
+                    : 'Registrar Medición Nominal de Nervio Óptico'}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* NASA Clinical Standard Reference */}
-      <div className="text-[11px] font-mono text-slate-400 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-cyan-300">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>NASA-STD-3001: Caliper a exactamente 3.0 mm retrobulbar. Umbral Crítico SANS: &gt;5.80 mm</span>
+      {/* NASA Standard Reference Footnote */}
+      <div className="text-[11px] font-mono text-slate-400 bg-slate-900/50 p-2.5 rounded-lg border border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-slate-300">
+          <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+          <span>NASA-STD-3001: Calipers a 3.0 mm retrobulbar. Umbral crítico SANS: &gt;5.80 mm</span>
         </div>
         <div className="text-slate-500">
-          ExMC Level of Care IV // Autonomous Ultrasound Diagnostic Suite
+          NASA ExMC Level of Care IV // Autonomous POCUS Diagnostic Suite
         </div>
       </div>
     </div>
