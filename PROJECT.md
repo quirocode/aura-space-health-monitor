@@ -99,7 +99,7 @@ Every requirement from `ORIGINAL_REQUEST.md` is inventoried and mapped to an imp
 | M3 | EVA DCS Prebreathe Engine & BFO Solar Storm Shelter | `src/services/radiationAndEclssEngine.ts`, `src/components/eva/EvaHelmetHud.tsx`, `src/components/twin/DigitalTwinForecast.tsx` | none | IMPLEMENTED & TESTED (Verified: DCS R-factor, O2 prebreathe, SPE BFO shelter, 440 tests pass) |
 | M4 | Quick Command Palette (Ctrl+K) & Circadian Night Cycle | `src/components/layout/QuickCommandPalette.tsx`, `src/components/layout/TopMissionBar.tsx`, `src/index.css`, `src/App.tsx` | M1 | DONE (Verified: Quick Command Palette Ctrl+K, Circadian 480nm-off, TopMissionBar, 77/77 tests pass) |
 | M5 | Jury Rubric Modal, Blackout Mode & App Integration | `src/components/pitch/ExecutivePitchModal.tsx`, `src/App.tsx`, and overall component integration | M1, M2, M3, M4 | DONE (Verified: 50/50 Rubric Matrix, Deep-Space Blackout Mode, 611/611 tests pass) |
-| M6 | E2E Verification, Build Validation, Git Commit & Deploy | Full build (`npm run build`), lint check, git commit & push to GitHub Pages | M5 | PLANNED |
+| M6 | E2E Verification, Build Validation, Git Commit & Deploy | Full build (`npm run build`), lint check, git commit & push to GitHub Pages | M5 | DONE (Verified: commit d3f75fd, git push origin main, GitHub Pages live) |
 
 ---
 
