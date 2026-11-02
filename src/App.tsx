@@ -21,13 +21,19 @@ import { GamificationPanel } from './components/GamificationPanel';
 import { WhyItMattersModal } from './components/WhyItMattersModal';
 import { MeasurementGuideModal } from './components/MeasurementGuideModal';
 
-// Advanced Clinical Instruments
+// Advanced Clinical Instruments & v3.0 Deep Space Autonomous Suite
 import { RealTimeWaveMonitor } from './components/ecg/RealTimeWaveMonitor';
 import { PocusAiAssistant } from './components/ultrasound/PocusAiAssistant';
 import { EvaHelmetHud } from './components/eva/EvaHelmetHud';
 import { VoiceCommandBar } from './components/voice/VoiceCommandBar';
 import { DigitalTwinForecast } from './components/twin/DigitalTwinForecast';
 import { ExecutivePitchModal } from './components/pitch/ExecutivePitchModal';
+import { ContactlessRppgScanner } from './components/biometrics/ContactlessRppgScanner';
+import { CognitionPvtSuite } from './components/neuro/CognitionPvtSuite';
+import { GoldenMinuteCrisisRunner } from './components/crisis/GoldenMinuteCrisisRunner';
+import { SpaceMedKitPharmacokinetics } from './components/pharmacy/SpaceMedKitPharmacokinetics';
+import { DeepSpaceStoreForwardQueue } from './components/telemetry/DeepSpaceStoreForwardQueue';
+import { EarthExtremeSpinoffPanel } from './components/spinoff/EarthExtremeSpinoffPanel';
 
 import { 
   Heart, 
@@ -54,7 +60,14 @@ export const App: React.FC = () => {
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceId>('surveillance');
   const [isVoiceOpen, setIsVoiceOpen] = useState<boolean>(false);
   const [isPitchModalOpen, setIsPitchModalOpen] = useState<boolean>(false);
+  const [isCrisisModalOpen, setIsCrisisModalOpen] = useState<boolean>(false);
   const [injectedOnsd, setInjectedOnsd] = useState<number | null>(null);
+  const [injectedHeartRate, setInjectedHeartRate] = useState<number | null>(null);
+
+  // Sub-tabs for Workspaces (Progressive Disclosure)
+  const [surveillanceSubTab, setSurveillanceSubTab] = useState<'triage' | 'pvt' | 'spinoff'>('triage');
+  const [diagnosticsSubTab, setDiagnosticsSubTab] = useState<'split' | 'ecg' | 'pocus' | 'rppg'>('split');
+  const [predictiveSubTab, setPredictiveSubTab] = useState<'twin' | 'pharmacy' | 'queue'>('twin');
 
   // Generate 180 days of realistic mission telemetry
   const timeline: TelemetryReading[] = useMemo(() => {
@@ -66,15 +79,21 @@ export const App: React.FC = () => {
 
   const currentTelemetry = useMemo(() => {
     const reading = timeline[Math.min(timeline.length - 1, Math.max(0, currentDay - 1))];
-    const base = reading || timeline[0];
+    let base = reading || timeline[0];
     if (injectedOnsd !== null) {
-      return {
+      base = {
         ...base,
         onsd_mm: injectedOnsd
       };
     }
+    if (injectedHeartRate !== null) {
+      base = {
+        ...base,
+        heartRate: injectedHeartRate
+      };
+    }
     return base;
-  }, [timeline, currentDay, injectedOnsd]);
+  }, [timeline, currentDay, injectedOnsd, injectedHeartRate]);
 
   const activeAlerts = useMemo(() => {
     return SpaceflightSimulationEngine.generateAlerts(currentTelemetry, currentEnv);
@@ -97,6 +116,7 @@ export const App: React.FC = () => {
     setCurrentDay(1);
     setSolarStormActive(false);
     setInjectedOnsd(null);
+    setInjectedHeartRate(null);
   };
 
   const handleToggleMute = () => {
@@ -110,11 +130,13 @@ export const App: React.FC = () => {
     switch (action.intent) {
       case 'heart_status':
         setActiveWorkspace('diagnostics');
+        setDiagnosticsSubTab('ecg');
         setSelectedRegion('heart');
         setIsVoiceOpen(false);
         break;
       case 'sans_protocol':
         setActiveWorkspace('diagnostics');
+        setDiagnosticsSubTab('pocus');
         setSelectedRegion('eyes');
         setIsVoiceOpen(false);
         break;
@@ -124,10 +146,20 @@ export const App: React.FC = () => {
         break;
       case 'open_forecast':
         setActiveWorkspace('predictive');
+        setPredictiveSubTab('twin');
         setIsVoiceOpen(false);
         break;
       case 'open_pitch':
         setIsPitchModalOpen(true);
+        setIsVoiceOpen(false);
+        break;
+      case 'open_crisis':
+        setIsCrisisModalOpen(true);
+        setIsVoiceOpen(false);
+        break;
+      case 'open_rppg':
+        setActiveWorkspace('diagnostics');
+        setDiagnosticsSubTab('rppg');
         setIsVoiceOpen(false);
         break;
       case 'switch_environment':
@@ -153,13 +185,20 @@ export const App: React.FC = () => {
       setSolarStormActive(true);
       setCurrentDay(45);
       setActiveWorkspace('surveillance');
+      setSurveillanceSubTab('triage');
     } else if (stationId === 2) {
-      // Station 2: POCUS Ocular AI + ECG 60 FPS
+      // Station 2: POCUS Ocular AI + ECG 60 FPS + rPPG
       setActiveWorkspace('diagnostics');
       setSelectedRegion('eyes');
+      setDiagnosticsSubTab('split');
     } else if (stationId === 3) {
-      // Station 3: Predictive Twin + EVA Mode
+      // Station 3: Predictive Twin + Space Pharmacy
       setActiveWorkspace('predictive');
+      setPredictiveSubTab('twin');
+    } else if (stationId === 4) {
+      // Station 4: Earth Extreme Spinoff Mode
+      setActiveWorkspace('surveillance');
+      setSurveillanceSubTab('spinoff');
     }
   };
 
@@ -178,6 +217,7 @@ export const App: React.FC = () => {
         isEvaMode={activeWorkspace === 'eva'}
         onToggleEvaMode={() => setActiveWorkspace(activeWorkspace === 'eva' ? 'surveillance' : 'eva')}
         onOpenPitchModal={() => setIsPitchModalOpen(true)}
+        onOpenCrisisModal={() => setIsCrisisModalOpen(true)}
       />
 
       {/* Main Cockpit App Shell (Max width 1600px with generous spacing) */}
@@ -353,25 +393,141 @@ export const App: React.FC = () => {
                 />
               </div>
 
-              {/* Columna Derecha (28% / 3 cols): Triaje Autónomo & Contramedidas */}
-              <div className="lg:col-span-3 space-y-4">
-                <AlertsPanel
-                  alerts={activeAlerts}
-                  currentEnv={currentEnv}
-                />
-                <GamificationPanel />
+              {/* Columna Derecha (28% / 3 cols): Triaje Autónomo, PVT Cognition o Spinoff Terrestre */}
+              <div className="lg:col-span-3 space-y-4 flex flex-col">
+                {/* Sub-tab Navigation */}
+                <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs font-mono">
+                  <button
+                    onClick={() => setSurveillanceSubTab('triage')}
+                    className={`flex-1 py-1.5 px-2 rounded-lg font-medium text-center transition-all ${
+                      surveillanceSubTab === 'triage'
+                        ? 'bg-slate-800 text-slate-100 border border-slate-700 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Triaje &amp; Metas
+                  </button>
+                  <button
+                    onClick={() => setSurveillanceSubTab('pvt')}
+                    className={`flex-1 py-1.5 px-2 rounded-lg font-medium text-center transition-all ${
+                      surveillanceSubTab === 'pvt'
+                        ? 'bg-slate-800 text-pink-300 border border-slate-700 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    PVT Cognition
+                  </button>
+                  <button
+                    onClick={() => setSurveillanceSubTab('spinoff')}
+                    className={`flex-1 py-1.5 px-2 rounded-lg font-medium text-center transition-all ${
+                      surveillanceSubTab === 'spinoff'
+                        ? 'bg-slate-800 text-emerald-300 border border-slate-700 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    🌍 Spinoff
+                  </button>
+                </div>
+
+                {surveillanceSubTab === 'triage' && (
+                  <div className="space-y-4">
+                    <AlertsPanel
+                      alerts={activeAlerts}
+                      currentEnv={currentEnv}
+                    />
+                    <GamificationPanel />
+                  </div>
+                )}
+
+                {surveillanceSubTab === 'pvt' && (
+                  <CognitionPvtSuite
+                    currentSleepHours={currentTelemetry.sleepHours}
+                  />
+                )}
+
+                {surveillanceSubTab === 'spinoff' && (
+                  <EarthExtremeSpinoffPanel />
+                )}
               </div>
             </div>
           </div>
         )}
 
         {/* ============================================================== */}
-        {/* ESTACIÓN 2: DIAGNÓSTICO EN VIVO (ECG 60 FPS + POCUS AI)         */}
+        {/* ESTACIÓN 2: DIAGNÓSTICO EN VIVO (ECG 60 FPS, POCUS AI, rPPG)    */}
         {/* ============================================================== */}
         {activeWorkspace === 'diagnostics' && (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-            {/* Monitor Fisiológico de Ondas (ECG Derivación II + PPG) */}
-            <div className="space-y-4">
+          <div className="space-y-4">
+            {/* Sub-tabs for Diagnostics Workspace */}
+            <div className="flex items-center gap-1.5 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800 text-xs font-mono max-w-xl">
+              <button
+                onClick={() => setDiagnosticsSubTab('split')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all ${
+                  diagnosticsSubTab === 'split'
+                    ? 'bg-slate-800 text-sky-300 border border-slate-700 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Vista Split
+              </button>
+              <button
+                onClick={() => setDiagnosticsSubTab('ecg')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all ${
+                  diagnosticsSubTab === 'ecg'
+                    ? 'bg-slate-800 text-rose-300 border border-slate-700 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                ECG 60 FPS
+              </button>
+              <button
+                onClick={() => setDiagnosticsSubTab('pocus')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all ${
+                  diagnosticsSubTab === 'pocus'
+                    ? 'bg-slate-800 text-cyan-300 border border-slate-700 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                POCUS AI
+              </button>
+              <button
+                onClick={() => setDiagnosticsSubTab('rppg')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all ${
+                  diagnosticsSubTab === 'rppg'
+                    ? 'bg-slate-800 text-emerald-300 border border-slate-700 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                📷 rPPG Webcam
+              </button>
+            </div>
+
+            {/* Split View (ECG + POCUS) */}
+            {diagnosticsSubTab === 'split' && (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                <RealTimeWaveMonitor
+                  baseHeartRate={currentTelemetry.heartRate}
+                  environmentName={
+                    currentEnv === 'earth' 
+                      ? 'Tierra (1g)' 
+                      : currentEnv === 'moon' 
+                        ? 'Luna (0.16g)' 
+                        : currentEnv === 'mars' 
+                          ? 'Marte (0.38g)' 
+                          : 'Microgravedad (0g)'
+                  }
+                />
+                <PocusAiAssistant
+                  onInjectSANSAlert={(onsd) => {
+                    setInjectedOnsd(onsd);
+                    setSelectedRegion('eyes');
+                  }}
+                />
+              </div>
+            )}
+
+            {/* ECG Only */}
+            {diagnosticsSubTab === 'ecg' && (
               <RealTimeWaveMonitor
                 baseHeartRate={currentTelemetry.heartRate}
                 environmentName={
@@ -384,26 +540,83 @@ export const App: React.FC = () => {
                         : 'Microgravedad (0g)'
                 }
               />
-            </div>
+            )}
 
-            {/* Asistente de Ultrasonido POCUS Edge-AI */}
-            <div className="space-y-4">
+            {diagnosticsSubTab === 'pocus' && (
               <PocusAiAssistant
                 onInjectSANSAlert={(onsd) => {
                   setInjectedOnsd(onsd);
                   setSelectedRegion('eyes');
                 }}
               />
-            </div>
+            )}
+
+            {/* rPPG Webcam DSP Scanner */}
+            {diagnosticsSubTab === 'rppg' && (
+              <ContactlessRppgScanner
+                onSyncVitals={(bpm) => {
+                  setInjectedHeartRate(bpm);
+                }}
+              />
+            )}
           </div>
         )}
 
         {/* ============================================================== */}
-        {/* ESTACIÓN 3: GEMELO PREDICTIVO (30 / 60 / 90 DÍAS)              */}
+        {/* ESTACIÓN 3: GEMELO PREDICTIVO & SUITE DE ESPACIO PROFUNDO      */}
         {/* ============================================================== */}
         {activeWorkspace === 'predictive' && (
           <div className="space-y-4">
-            <DigitalTwinForecast currentDay={currentDay} />
+            {/* Sub-tabs for Predictive Workspace */}
+            <div className="flex items-center gap-1.5 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800 text-xs font-mono max-w-xl">
+              <button
+                onClick={() => setPredictiveSubTab('twin')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all ${
+                  predictiveSubTab === 'twin'
+                    ? 'bg-slate-800 text-sky-300 border border-slate-700 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Gemelo Predictivo (30/60/90d)
+              </button>
+              <button
+                onClick={() => setPredictiveSubTab('pharmacy')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all ${
+                  predictiveSubTab === 'pharmacy'
+                    ? 'bg-slate-800 text-amber-300 border border-slate-700 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Botiquín Espacial ISS / Orion
+              </button>
+              <button
+                onClick={() => setPredictiveSubTab('queue')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition-all ${
+                  predictiveSubTab === 'queue'
+                    ? 'bg-slate-800 text-emerald-300 border border-slate-700 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Cola DSN (CCSDS / FHIR)
+              </button>
+            </div>
+
+            {predictiveSubTab === 'twin' && (
+              <DigitalTwinForecast currentDay={currentDay} />
+            )}
+
+            {predictiveSubTab === 'pharmacy' && (
+              <SpaceMedKitPharmacokinetics
+                cumulativeRadiation_mSv={currentTelemetry.cumulativeRadiation_mSv}
+              />
+            )}
+
+            {predictiveSubTab === 'queue' && (
+              <DeepSpaceStoreForwardQueue
+                currentTelemetry={currentTelemetry}
+                currentEnv={currentEnv}
+              />
+            )}
           </div>
         )}
 
@@ -425,6 +638,22 @@ export const App: React.FC = () => {
         isOpen={isVoiceOpen}
         onClose={() => setIsVoiceOpen(false)}
         onExecuteCommand={handleExecuteVoiceCommand}
+      />
+
+      {/* Golden-Minute Crisis State Machine Modal */}
+      <GoldenMinuteCrisisRunner
+        isOpen={isCrisisModalOpen}
+        onClose={() => setIsCrisisModalOpen(false)}
+        onLaunchPocus={() => {
+          setIsCrisisModalOpen(false);
+          setActiveWorkspace('diagnostics');
+          setDiagnosticsSubTab('pocus');
+        }}
+        onLaunchPharmacy={() => {
+          setIsCrisisModalOpen(false);
+          setActiveWorkspace('predictive');
+          setPredictiveSubTab('pharmacy');
+        }}
       />
 
       {/* NASA Jury 3-Minute Walkthrough Modal */}
@@ -450,14 +679,14 @@ export const App: React.FC = () => {
         <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="text-slate-300 font-medium">AURA-EIMO v2.5 // Dark Cockpit Avionics Standard</span>
+            <span className="text-slate-300 font-medium">AURA-EIMO v3.0 // Deep-Space Autonomous Clinical Suite</span>
             <span className="text-slate-700">|</span>
             <span className="text-slate-400">NASA Space Apps Challenge 2026</span>
           </div>
 
           <div className="flex items-center gap-4 text-slate-400">
             <span>NASA-STD-3001 Vol. 2</span>
-            <span>EIMO Level IV/V</span>
+            <span>ExMC Level of Care IV/V</span>
             <span>Local-First PWA</span>
             <a
               href="https://github.com/quirocode/aura-space-health-monitor"

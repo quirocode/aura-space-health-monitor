@@ -74,6 +74,8 @@ export type VoiceIntentType =
   | 'toggle_eva'
   | 'open_forecast'
   | 'open_pitch'
+  | 'open_crisis'
+  | 'open_rppg'
   | 'switch_environment'
   | 'unknown';
 
@@ -131,4 +133,109 @@ export interface PitchStation {
   keyEvidencePoints: string[];
   actionLabel: string;
   actionIntent: string;
+}
+
+// =============================================================
+// v3.0 ADVANCED CLINICAL SUITE TYPES
+// =============================================================
+
+// 1. Contactless rPPG DSP Scanner
+export interface RppgReading {
+  heartRate_bpm: number;
+  hrvRmssd_ms: number;
+  respirationRate_rpm: number;
+  perclos_percent: number; // Palpebral fatigue % (PERCLOS)
+  signalQualityPercent: number;
+  rawGTrace: number[];
+  rawRTrace: number[];
+  timestamp: number;
+  isSimulatedFallback: boolean;
+}
+
+// 2. NASA "Cognition" Psychomotor Vigilance Test (PVT)
+export interface PvtTrialResult {
+  trialIndex: number;
+  stimulusDelay_ms: number;
+  reactionTime_ms: number;
+  isFalseStart: boolean;
+  isLapse: boolean; // Reaction time > 500 ms
+}
+
+export interface PvtSessionSummary {
+  completedAt: string;
+  totalTrials: number;
+  meanRt_ms: number;
+  medianRt_ms: number;
+  lapsesCount: number;
+  falseStartsCount: number;
+  operationalFitness: 'GO' | 'CAUTION' | 'NO-GO';
+  sleepDebt_hours: number;
+  lightingPrescription: string;
+}
+
+// 3. Golden-Minute Crisis Machine & Differential Engine
+export type CrisisPhase = 
+  | 'intake_triage'
+  | 'differential_analysis'
+  | 'restraint_positioning'
+  | 'cpr_metronome'
+  | 'pocus_ruleout'
+  | 'pharmacy_delivery'
+  | 'stabilized_report';
+
+export interface DifferentialDiagnosis {
+  scenario: 'environmental_co2' | 'cardiac_event' | 'tension_pneumothorax' | 'pulmonary_embolism';
+  title: string;
+  confidence: number;
+  rationale: string;
+  eclssCrossCheck: string;
+  primaryAction: string;
+  guidanceSteps: string[];
+}
+
+// 4. Space Pharmacy & Pharmacokinetics
+export interface SpaceMedItem {
+  id: string;
+  name: string;
+  category: 'cardiovascular' | 'neuro_ocular' | 'bone_mineral' | 'circadian' | 'renal_prophylaxis';
+  indication: string;
+  standardDose: string;
+  route: 'Oral' | 'IM / Autoinyector' | 'IV' | 'Inhalado';
+  stockUnits: number;
+  microgravityAdjustmentFactor: number; // Plasma volume reduction shift (e.g. 0.88x)
+  adjustedDoseText: string;
+  radiationDegradationRatePercentPer100mSv: number;
+  residualPotencyPercent: number;
+  administrationWarning: string;
+}
+
+// 5. Deep Space Store-and-Forward Telemetry (CCSDS / HL7-FHIR)
+export type PacketPriority = 'P1-CRITICAL' | 'P2-CLINICAL' | 'P3-ROUTINE';
+export type PacketProtocol = 'CCSDS-133.0-B' | 'HL7-FHIR-R4';
+
+export interface TelemetryPacket {
+  id: string;
+  timestamp: string;
+  destination: 'DSN_CANBERRA' | 'DSN_GOLDSTONE' | 'DSN_MADRID';
+  priority: PacketPriority;
+  protocol: PacketProtocol;
+  payloadSize_kb: number;
+  status: 'STORED_ONBOARD' | 'TRANSMITTING' | 'ACKNOWLEDGED_EARTH';
+  propagationCountdownSec: number;
+  title: string;
+  summary: string;
+  fhirJsonPayload: string;
+}
+
+// 6. Earth Extreme Spinoff: Remote Andean & Amazonian Clinic
+export interface RuralClinicalCalibration {
+  id: 'andean_high_altitude' | 'amazon_rainforest' | 'antarctica_station';
+  name: string;
+  altitude_m: number;
+  barometricPressure_mmHg: number;
+  spo2NormalRange: { min: number; max: number };
+  hemoglobinBaseline_g_dL: number;
+  clinicalRationale: string;
+  spaceParallel: string;
+  triageGuidance: string;
 }

@@ -7,7 +7,8 @@ import {
   Shield, 
   Rocket, 
   Mic, 
-  Compass
+  Compass,
+  AlertTriangle
 } from 'lucide-react';
 
 interface TopMissionBarProps {
@@ -22,6 +23,7 @@ interface TopMissionBarProps {
   isEvaMode: boolean;
   onToggleEvaMode: () => void;
   onOpenPitchModal: () => void;
+  onOpenCrisisModal?: () => void;
 }
 
 const ENVIRONMENTS: { id: EnvironmentId; label: string; gravity: string; delay: string }[] = [
@@ -43,6 +45,7 @@ export const TopMissionBar: React.FC<TopMissionBarProps> = ({
   isEvaMode,
   onToggleEvaMode,
   onOpenPitchModal,
+  onOpenCrisisModal,
 }) => {
   const currentEnvData = ENVIRONMENTS.find(e => e.id === currentEnv) || ENVIRONMENTS[1];
 
@@ -60,7 +63,7 @@ export const TopMissionBar: React.FC<TopMissionBarProps> = ({
                 AURA-EIMO
               </span>
               <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700/60 hidden sm:inline">
-                v2.5 // NASA HRP
+                v3.0 // NASA ExMC Suite
               </span>
             </div>
           </div>
@@ -150,6 +153,18 @@ export const TopMissionBar: React.FC<TopMissionBarProps> = ({
           <Shield className="w-3.5 h-3.5 text-emerald-400" />
           <span className="hidden sm:inline">EVA HUD</span>
         </button>
+
+        {/* Golden-Minute Crisis Protocol Button */}
+        {onOpenCrisisModal && (
+          <button
+            onClick={onOpenCrisisModal}
+            className="bg-rose-950/50 hover:bg-rose-900/80 border border-rose-800/80 px-2.5 py-1.5 rounded-lg text-rose-200 hover:text-white flex items-center gap-1.5 transition-all shadow-sm group"
+            title="Lanzar protocolo de emergencia Golden-Minute (Colapso agudo en Marte)"
+          >
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-400 group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline font-bold text-rose-300">Crisis 60s</span>
+          </button>
+        )}
 
         {/* Executive Pitch Modal Trigger */}
         <button

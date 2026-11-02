@@ -36,11 +36,11 @@ export const ExecutivePitchModal: React.FC<ExecutivePitchModalProps> = ({
       timeRange: '0:00 - 0:45',
       title: 'El Problema de Espacio Profundo y EIMO Level IV/V',
       subtitle: 'La telemedicina tradicional es obsoleta con 24 min de latencia hacia Marte',
-      summary: 'En misiones a la Luna y Marte, la telemedicina en tiempo real es físicamente imposible debido al retraso de la luz (hasta 24 min por sentido). Si un astronauta colapsa o desarrolla SANS, la tripulación no puede esperar una videollamada de Houston. AURA-EIMO proporciona autonomía clínica total de nivel IV/V, 100% offline-first y local.',
+      summary: 'En misiones a la Luna y Marte, la telemedicina en tiempo real es físicamente imposible debido al retraso electromagnético (hasta 24 min por sentido). Si un astronauta colapsa o desarrolla SANS, la tripulación no puede esperar una videollamada de Houston. AURA-EIMO proporciona autonomía clínica total de nivel IV/V, 100% offline-first con motor diferencial Golden-Minute de 60 segundos y persistencia local IndexedDB.',
       keyEvidencePoints: [
         'NASA ExMC (Exploration Medical Capability) Level of Care IV/V Architecture.',
         'Mapeo de los 5 peligros HRP: Gravedad alterada, Radiación, Aislamiento, Distancia y Entornos cerrados.',
-        'Buffer Store-and-Forward de telemetría hacia Deep Space Network (DSN).'
+        'Protocolo Golden-Minute con diagnóstico diferencial cuerpo vs. soporte vital ECLSS (ppCO2).'
       ],
       actionLabel: '▶ Demostrar Retardo a Marte + Emergencia',
       actionIntent: 'simulate_mars_emergency'
@@ -49,28 +49,28 @@ export const ExecutivePitchModal: React.FC<ExecutivePitchModalProps> = ({
       id: 2,
       timeRange: '0:45 - 1:30',
       title: 'Validación Científica NASA-STD-3001 y Visión POCUS',
-      subtitle: 'Cero datos inventados: estándares aeroespaciales rigurosos y Edge AI',
-      summary: 'Cada umbral clínico en AURA-EIMO cita la norma oficial NASA-STD-3001 y los reportes de evidencia del Human Research Program. Incorporamos un asistente de ultrasonido B-Scan guiado por Edge AI para medir el diámetro de la vaina del nervio óptico (ONSD) a exactamente 3.0 mm retrobulbar para diagnosticar SANS, junto a un monitor de ondas ECG y PPG a 60 FPS.',
+      subtitle: 'Cero datos inventados: estándares aeroespaciales rigurosos, Edge AI y rPPG',
+      summary: 'Cada umbral clínico en AURA-EIMO cita la norma oficial NASA-STD-3001 y los reportes de evidencia del Human Research Program. Incorporamos un asistente de ultrasonido B-Scan guiado por Edge AI para medir el diámetro de la vaina del nervio óptico (ONSD) a 3.0 mm retrobulbar, un monitor de ondas ECG y PPG a 60 FPS, y un escáner óptico facial sin contacto por webcam (rPPG DSP) para signos vitales.',
       keyEvidencePoints: [
         'NASA-STD-3001 Vol 1 & 2: Umbral SANS crítico en ONSD > 5.80 mm.',
-        'Sintetizador fisiológico de ECG Derivación II con suma de 5 gaussianas.',
+        'Fotopletismografía remota (rPPG) por webcam con extracción de canales G/R y PERCLOS.',
         'Fiebre Espacial (Space Fever): ajuste de termorregulación central en 0g.'
       ],
-      actionLabel: '▶ Lanzar Escáner Ocular AI + Monitor ECG 60 FPS',
+      actionLabel: '▶ Lanzar Escáner Ocular AI + Monitor ECG + rPPG',
       actionIntent: 'launch_pocus_ecg'
     },
     {
       id: 3,
       timeRange: '1:30 - 2:15',
-      title: 'Operaciones de Superficie (xEMU) y Gemelo Predictivo',
-      subtitle: 'Fusión de soporte vital con proyección de deriva a 90 días',
-      summary: 'En la superficie lunar o marciana, AURA conmuta al HUD del casco xEMU, vigilando el consumo de O2, la presión parcial de CO2 (evitando hipercapnia >4.0 mmHg) y la dosimetría de radiación cósmica. Paralelamente, el Gemelo Digital proyecta con conos de incertidumbre a 90 días la pérdida de masa ósea femoral y la fatiga aeróbica.',
+      title: 'Operaciones de Superficie, Gemelo Predictivo y Farmacia',
+      subtitle: 'Fusión de soporte vital, proyección a 90 días y botiquín de exploración',
+      summary: 'En la superficie lunar o marciana, AURA conmuta al HUD del casco xEMU (ppCO2, LCVG, radiación) y proyecta con conos de incertidumbre a 90 días la pérdida de masa ósea femoral y fatiga aeróbica. Añadimos el inventario del botiquín médico de exploración ISS/Orion con cálculo de degradación por radiación y ajuste de dosis por hipovolemia plasmática.',
       keyEvidencePoints: [
         'NASA xEMU ECLSS: LCVG cooling, purga auxiliar y monitoreo de Metox.',
         'Modelo matemático de pérdida de BMD femoral: -1.5%/mes mitigado por ARED.',
-        'Detección temprana de tormentas solares (SPE) con evacuación a refugio.'
+        'Ajuste farmacocinético en 0g (-12% volumen plasmático) y degradación cósmica.'
       ],
-      actionLabel: '▶ Activar Simulación EVA + Gemelo 90 Días',
+      actionLabel: '▶ Activar Simulación EVA + Gemelo 90 Días + Farmacia',
       actionIntent: 'activate_eva_twin'
     },
     {
@@ -78,11 +78,11 @@ export const ExecutivePitchModal: React.FC<ExecutivePitchModalProps> = ({
       timeRange: '2:15 - 3:00',
       title: 'Impacto Dual: De Marte a los Andes y la Amazonía',
       subtitle: 'Telemedicina autónoma extrema para comunidades aisladas en la Tierra',
-      summary: 'La mayor fortaleza de AURA-EIMO es su impacto dual: la misma tecnología desconectada y de bajo consumo creada para astronautas en Marte puede instalarse en postas médicas rurales de los Andes o de la Amazonía peruana, donde no hay médicos especialistas ni conexión a internet fiable, guiando a enfermeros y personal local.',
+      summary: 'La mayor fortaleza de AURA-EIMO es su impacto dual: la misma tecnología desconectada y de bajo consumo creada para astronautas en Marte puede operar en postas médicas rurales de los Andes (4,300m s.n.m. con hipoxia hipobárica) o la Amazonía aislada, con cola Store-and-Forward (CCSDS/HL7-FHIR) y batería neurocognitiva NASA PVT Cognition.',
       keyEvidencePoints: [
-        'PWA 100% Offline-First ejecutable en cualquier tablet de bajo costo.',
-        'Democratización de ecografía POCUS para triaje de emergencias remotas.',
-        'Traducción directa de innovación aeroespacial en salud pública global.'
+        'Recalibración de SpO2 por hipoxia hipobárica (88-91% normal a 4,300m) evitando falsas alarmas.',
+        'Cola asíncrona Store-and-Forward compatible con HL7-FHIR R4 y CCSDS 133.0-B.',
+        'Test PVT Cognition con medición en submilisegundos nativos del navegador.'
       ],
       actionLabel: '🔊 Narrar Pitch Ejecutivo con Voz de AURA',
       actionIntent: 'speak_pitch_narrative'
