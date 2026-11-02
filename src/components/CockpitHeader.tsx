@@ -1,16 +1,22 @@
 import React from 'react';
-import { WifiOff, Volume2, VolumeX, AlertCircle, Compass } from 'lucide-react';
+import { WifiOff, Volume2, VolumeX, AlertCircle, Compass, Shield, Rocket } from 'lucide-react';
 
 interface CockpitHeaderProps {
   currentDay: number;
   isMuted: boolean;
   onToggleMute: () => void;
+  onToggleEvaMode: () => void;
+  isEvaMode: boolean;
+  onOpenPitchModal: () => void;
 }
 
 export const CockpitHeader: React.FC<CockpitHeaderProps> = ({
   currentDay,
   isMuted,
   onToggleMute,
+  onToggleEvaMode,
+  isEvaMode,
+  onOpenPitchModal
 }) => {
   return (
     <header className="hud-panel border-b border-cyan-500/30 px-4 py-3 sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md">
@@ -43,10 +49,34 @@ export const CockpitHeader: React.FC<CockpitHeaderProps> = ({
             </span>
           </div>
 
+          {/* NASA Judge Executive Pitch Button */}
+          <button
+            onClick={onOpenPitchModal}
+            className="bg-gradient-to-r from-purple-900/80 to-cyan-900/80 hover:from-purple-800 hover:to-cyan-800 border border-purple-400/60 hover:border-cyan-300 px-3 py-1.5 rounded-lg text-white font-bold flex items-center gap-1.5 transition-all shadow-[0_0_15px_rgba(168,85,247,0.35)] animate-pulse"
+            title="Recorrido guiado de 3 minutos para evaluación del jurado"
+          >
+            <Rocket className="w-3.5 h-3.5 text-cyan-300" />
+            <span>🚀 Mission Debrief &amp; Pitch</span>
+          </button>
+
+          {/* EVA xEMU HUD Switch */}
+          <button
+            onClick={onToggleEvaMode}
+            className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 font-bold transition-all ${
+              isEvaMode 
+                ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.5)]'
+                : 'bg-slate-900 hover:bg-slate-800 border-cyan-500/50 text-cyan-300 hover:text-white'
+            }`}
+            title="Conmutar a interfaz de casco espacial xEMU"
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>{isEvaMode ? 'EVA ACTIVO' : 'MODO EVA HUD'}</span>
+          </button>
+
           {/* Offline-First Badge */}
-          <div className="bg-emerald-950/60 border border-emerald-500/40 px-3 py-1.5 rounded-lg text-emerald-300 flex items-center gap-1.5">
+          <div className="bg-emerald-950/60 border border-emerald-500/40 px-3 py-1.5 rounded-lg text-emerald-300 flex items-center gap-1.5 hidden xl:flex">
             <WifiOff className="w-3.5 h-3.5" />
-            <span className="font-semibold">OFFLINE-FIRST (LOCAL)</span>
+            <span className="font-semibold">OFFLINE-FIRST</span>
           </div>
 
           {/* GitHub Repo Link */}

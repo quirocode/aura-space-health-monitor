@@ -1,69 +1,97 @@
-# AURA-EIMO 🚀 | Autonomous Astronaut Health Monitor
+# AURA-EIMO v2.0 🚀 | Global Winner Edition
 > **NASA International Space Apps Challenge 2026**  
 > **Reto:** *"Create Health Monitoring Software for Astronauts on Space Missions"*  
-> **Sede:** Lima, Perú  
-> **🌐 Demo en Vivo (Acceso Público):** [https://quirocode.github.io/aura-space-health-monitor/](https://quirocode.github.io/aura-space-health-monitor/)  
+> **Sede:** Lima, Perú & Global  
+> **🌐 Demo en Vivo (Acceso Público en Producción):** [https://quirocode.github.io/aura-space-health-monitor/](https://quirocode.github.io/aura-space-health-monitor/)  
 > **📦 Repositorio Oficial:** [https://github.com/quirocode/aura-space-health-monitor](https://github.com/quirocode/aura-space-health-monitor)  
 
 ---
 
 ## 🛰️ 1. Descripción del Proyecto
 
-**AURA-EIMO** (*Autonomous Ultrasound & Resilience Assistant for Earth-Independent Medical Operations*) es una aplicación web progresiva (**PWA, 100% Offline-First**) diseñada para empoderar a los astronautas en misiones de exploración profunda (Artemis en la Luna y tránsito/superficie de Marte) mediante auto-evaluación clínica visual, triaje asistido y prescripción de contramedidas inmediatas sin depender de telemedicina terrestre en tiempo real.
+**AURA-EIMO** (*Autonomous Ultrasound & Resilience Assistant for Earth-Independent Medical Operations*) es una plataforma médica de cabina espacial (**PWA, 100% Offline-First**) diseñada para empoderar a los astronautas en misiones de espacio profundo (Artemis en la Luna, Gateway y tránsito/superficie de Marte) mediante auto-evaluación visual, triaje asistido, visión por computadora para ecografía y prescripción de contramedidas inmediatas sin depender de telemedicina terrestre en tiempo real.
 
-Debido al retraso insalvable en comunicaciones por radio (**~1.3 s en la Luna; 4 a 24 minutos por sentido en Marte**), las tripulaciones espaciales deben asumir el rol de agentes médicos autónomos (**EIMO - Earth-Independent Medical Operations**).
+Debido al retraso insalvable en comunicaciones por radio (**~1.3 s en la Luna; 4 a 24 minutos por sentido en Marte**), las tripulaciones espaciales deben asumir el rol de agentes médicos autónomos (**EIMO - Earth-Independent Medical Operations, NASA Level of Care IV/V**).
 
 ---
 
-## 🔬 2. Mapeo con los 5 Peligros del NASA Human Research Program (HRP)
+## ⚡ 2. Las 6 Nuevas Capacidades Globales (v2.0)
 
-| Peligro HRP | Impacto Fisiológico en Misión | Indicador Medido en AURA-EIMO | Fuente Científica Verificable |
+### 🔬 Capacidad 1: Visión por Computadora / Asistente POCUS Edge-AI
+- **B-Scan Ocular (Detección SANS - Nervio Óptico):** Renderizado procedural de cono ecográfico en HTML5 Canvas con ruido acústico (*speckle noise* Rayleigh), globo ocular anecoico y sombra acústica retrobulbar.
+- **Calibradores Milimétricos Digitales a 3.0 mm:** Medición automática del **ONSD** (*Optic Nerve Sheath Diameter*) con nivel de confianza (`CONFIDENCE: 96.4%`).
+- **Ajuste de Transductor Butterfly iQ:** Calibración en vivo (-15° a +15°) con feedback háptico/visual (`"SEÑAL ÓPTIMA ADQUIRIDA — PLANO RETROBULBAR FIJADO"` o aviso de sombra oblicua).
+- **Modo Ecocardiografía:** Visualización de contracción ventricular izquierda y fracción de eyección.
+- **Carga de Archivos Locales:** Soporte para subir imágenes ecográficas propias (`.png`/`.jpg`) y analizarlas sobre el lienzo.
+
+### ⚡ Capacidad 2: Monitor de Ondas Fisiológicas 60 FPS (ECG & PPG)
+- **Canal 1 (ECG Derivación II):** Modela matemáticamente el complejo **P-Q-R-S-T** mediante suma de 5 funciones gaussianas sincronizadas con la frecuencia cardíaca:
+  $$V(t) = \sum_{i \in \{P,Q,R,S,T\}} A_i \exp\left(-\frac{(t - \mu_i)^2}{2\sigma_i^2}\right)$$
+- **Canal 2 (PPG Pleth):** Onda pulsátil dicrótica con retardo fisiológico de tránsito de pulso.
+- **Efecto Osciloscopio con Persistencia de Fósforo:** Barrido continuo y cuadrícula médica milimetrada.
+- **3 Escenarios Electrofisiológicos:** Ritmo Sinusal Nominal, Extrasístoles Ventriculares (PVC por redistribución cefálica en 0g) y Taquicardia/Arritmia por estrés o tormenta solar (SPE).
+- **Sintetizador Web Audio API Puro:** Beep clínico en tiempo real sincronizado al pico R del QRS (880 Hz nominal, 660 Hz precaución, doble tono 1200 Hz crítico), con control MUTE/ON.
+
+### 🛡️ Capacidad 3: Modo EVA (Extravehicular Activity / Casco xEMU)
+- **HUD OLED Reflectivo de Alto Contraste:** Estilo visor de casco espacial **NASA xEMU** con retícula de colimación y curvatura de visera para operaciones bajo luz solar lunar extrema o tormentas de polvo marcianas.
+- **Telemetría Crítica PLSS / ECLSS:**
+  - Tanques de $\text{O}_2$ primario y secundario con cálculo de tiempo restante de caminata espacial (`HH:MM:SS`).
+  - Presión parcial de $\text{CO}_2$ en casco ($\text{ppCO}_2$ en mmHg): Alerta crítica de hipercapnia ($> 4.0\text{ mmHg}$) con botón de apertura de válvula de purga auxiliar.
+  - Termorregulación LCVG (*Liquid Cooling & Ventilation Garment*) con selectores de enfriamiento MIN/MED/MAX.
+  - Índice de fatiga muscular adaptado a la gravedad superficial (Luna $0.16g$, Marte $0.38g$).
+  - Dosimetría de radiación cósmica en tiempo real con alarma de evacuación obligatoria a refugio (*Storm Shelter*).
+
+### 🎙️ Capacidad 4: Asistente Clínico por Voz Offline
+- **Interacción Manos Libres:** Pensado para cuando el astronauta viste guantes presurizados o sostiene el ecógrafo en microgravedad.
+- **Síntesis de Voz Offline (`speechSynthesis`):** Locución de diagnósticos y alertas con timbre de computadora de a bordo (`pitch: 0.96`, `rate: 1.02`).
+- **Reconocimiento de Voz & Chips Táctiles de 1-Clic:** Resiliencia total ante cualquier navegador. Soporta comandos hablados o botones de respaldo:
+  - *"AURA, estado del corazón"* $\rightarrow$ Focaliza sistema cardiovascular y abre monitor ECG.
+  - *"AURA, protocolo SANS"* $\rightarrow$ Despliega asistente POCUS y calibra nervio óptico.
+  - *"AURA, activar modo EVA"* $\rightarrow$ Conmuta al HUD de soporte vital del traje xEMU.
+  - *"AURA, gemelo digital"* $\rightarrow$ Abre proyección de 90 días.
+  - *"AURA, registrar telemetría"* $\rightarrow$ Confirma snapshot con sello temporal.
+  - *"AURA, viajar a Marte"* $\rightarrow$ Modifica gravedad a $0.38g$ y retardo a 20 minutos.
+
+### 🧬 Capacidad 5: Gemelo Digital y Proyección Predictiva (30/60/90 Días)
+- **What-If Clinical Sandbox:** Deslizadores interactivos de adherencia a ejercicio resistivo ARED ($0.0 - 2.5\text{ h/día}$), radiación espacial ($0.4 - 2.5\text{ mSv/día}$) y eficiencia circadiana de sueño ($4.0 - 8.0\text{ h/noche}$).
+- **Gráfica Multivariada SVG con Conos de Incertidumbre ($\pm 1\sigma$):**
+  - **Densidad Mineral Ósea (BMD % femoral/lumbar):** Basado en el modelo matemático del NASA HRP:
+    $$\Delta \text{BMD}(m) = -m \cdot \left(1.5 - 1.25 \cdot \min\left(1, \frac{T_{\text{ARED}}}{2.2}\right)\right)$$
+  - **Capacidad Aeróbica ($\text{VO}_2\text{ máx}$):** Decaimiento modelado por falta de carga física y fatiga circadiana.
+  - **Progresión Neuro-Ocular SANS:** Engrosamiento proyectado de la vaina del nervio óptico.
+- **Veredicto Clínico Ejecutivo:** Calcula automáticamente el día exacto de cruce de umbrales críticos (ej. Día +64 Osteopenia) y prescribe contramedidas específicas (suplementación con bifosfonatos, Vitamina D3 o LBNP).
+
+### 🚀 Capacidad 6: Pitch Deck & Interactive Walkthrough para Jueces NASA
+- Botón pulsante en cabina: **"🚀 Mission Debrief & Pitch"**.
+- Recorrido guiado de 3 minutos estructurado en **4 Estaciones de Evaluación**:
+  1. **Estación 1 (0:00 - 0:45) — Problema de Espacio Profundo y EIMO Level IV/V:** Botón en vivo `"▶ Demostrar Retardo a Marte + Emergencia"`.
+  2. **Estación 2 (0:45 - 1:30) — Validación Científica NASA-STD-3001:** Botón en vivo `"▶ Lanzar Escáner Ocular AI + Monitor ECG 60 FPS"`.
+  3. **Estación 3 (1:30 - 2:15) — Operaciones Superficiales (xEMU) y Gemelo 90d:** Botón en vivo `"▶ Activar Simulación EVA + Gemelo 90 Días"`.
+  4. **Estación 4 (2:15 - 3:00) — Impacto Dual Tierra-Espacio:** Botón en vivo `"🔊 Narrar Pitch Ejecutivo con Voz de AURA"` (telemedicina rural extrema en los Andes y Amazonía).
+
+---
+
+## 🔬 3. Mapeo Científico con los 5 Peligros del NASA HRP
+
+| Peligro HRP | Impacto Fisiológico en Misión | Módulo de Diagnóstico en AURA | Fuente Científica Verificable |
 | :--- | :--- | :--- | :--- |
-| **Campos Gravitatorios Alterados** ($0g$, Luna $0.16g$, Marte $0.38g$) | **Cephalad Fluid Shift** (~2 L hacia la cabeza), **SANS** (edema de vaina del nervio óptico ONSD), atrofia muscular e intolerancia ortostática. | Presión arterial ajustada, ONSD (mm), masa muscular (%), BMD fémur (%). | NASA-STD-3001 Vol 1; Hughson et al., AJP Heart 2016; NASA HRP SANS Evidence Book. |
-| **Radiación Espacial** (GCR y SPE) | Daño celular agudo, riesgo de carcinogénesis (REIC), cataratas e inmunodepresión. | Tasa de dosis diaria ($\text{mSv/día}$) y dosis acumulada ($\text{mSv}$). | Zeitlin et al., Science 2013 (MSL RAD Cruise); Zhang et al., Science Advances 2020 (LND Luna). |
-| **Aislamiento y Confinamiento** | Síndrome asténico, disfunción neuroconductual y desincronización circadiana. | Horas de sueño REM/profundo, escala de ánimo (BHP 1-10) y fatiga cognitiva PVT (%). | Barger et al., Lancet Neurology 2014; NASA BHP Evidence Book. |
-| **Distancia de la Tierra** | Imposibilidad de evacuación de emergencia médica y retardo de comunicación crítico. | Motor de triaje en 3 niveles y buffer de telemetría DSN. | NASA ExMC Autonomous Medical Officer (AMOS); NASA Level of Care IV/V. |
-| **Ambientes Cerrados y Hostiles** | "Fiebre espacial" (elevación de ~1°C central por falta de convección) e hipercapnia por $\text{CO}_2$. | Temperatura central (°C) y frecuencia respiratoria. | Stahn et al., Nature Scientific Reports 2017; NASA Environmental Health Standard. |
+| **Campos Gravitatorios Alterados** ($0g$, Luna $0.16g$, Marte $0.38g$) | **Cephalad Fluid Shift** (~2 L hacia la cabeza), **SANS** (ONSD > 5.8 mm), atrofia muscular y pérdida ósea. | POCUS Ocular Edge AI, Gemelo Digital 90d, Monitor ECG Derivación II. | NASA-STD-3001 Vol 1; NASA HRP SANS Evidence Book; Hughson et al., AJP Heart 2016. |
+| **Radiación Espacial** (GCR y SPE) | Daño celular agudo, carcinogénesis (REIC), cataratas e inmunodepresión. | Dosimetría de Superficie EVA, Inyector de Tormenta Solar SPE, Filtro de Dosis de Carrera. | Zeitlin et al., Science 2013 (MSL RAD Cruise); Zhang et al., Science Advances 2020 (LND Luna). |
+| **Aislamiento y Confinamiento** | Síndrome asténico, disfunción neuroconductual y desincronización circadiana. | Escala BHP, PVT de fatiga cognitiva y modelado de sueño en Gemelo Digital. | Barger et al., Lancet Neurology 2014; NASA BHP Evidence Book. |
+| **Distancia de la Tierra** | Imposibilidad de evacuación inmediata y retardo de comunicación crítico. | Motor de triaje autónomo en 3 niveles, buffer DSN y Asistente de Voz Offline. | NASA ExMC Autonomous Medical Officer (AMOS); NASA Level of Care IV/V. |
+| **Ambientes Cerrados y Hostiles** | "Fiebre espacial" (elevación de ~1°C central) e hipercapnia por saturación de $\text{CO}_2$. | Monitor de Soporte Vital EVA (ppCO2 en casco, purga auxiliar) y ajuste de temperatura en $0g$. | Stahn et al., Nature Scientific Reports 2017; NASA ECLSS Standards. |
 
 ---
 
-## ⚡ 3. Características Clave del Software
+## 🛠️ 4. Stack Tecnológico & Arquitectura
 
-1. **Figura Humana Anatómica SVG Interactiva:**
-   - 8 regiones clave (Cerebro, Ojos/SANS, Corazón, Pulmones, Riñones/Volemia, Músculos, Huesos, Sistema Inmune).
-   - Semáforo semántico en tiempo real (**Nominal / Precaución / Crítico**) y tendencia.
-   - Navegación táctil y por teclado accesible (WCAG).
-
-2. **Calibración Gravitatoria Dinámica:**
-   - Selector instantáneo de 4 entornos: **Tierra ($1.0g$)**, **Nave ($0.0g$)**, **Luna ($0.16g$)** y **Marte ($0.38g$)**.
-   - Los rangos de normalidad clínica cambian dinámicamente según el entorno.
-
-3. **Línea de Tiempo y Simulador de Deriva Fisiológica (Días 1 a 180):**
-   - Modela matemáticamente la redistribución de fluidos en los días 0-5, el declive de densidad ósea (-1.1% mensual en $0g$) y el efecto del "tercer trimestre" en la salud mental.
-   - Botón de inyección de crisis: **"Simular Tormenta Solar (SPE)"** con radiación elevada y alerta inmediata de evacuación a refugio.
-
-4. **Motor de Triaje Clínico en 3 Niveles:**
-   - **Nivel 1: Autogestión a bordo:** Consejos prácticos (ej. beber sales, ejercicios específicos en ARED, uso de dispositivo LBNP).
-   - **Nivel 2: Notificar a la tripulación:** Alerta al Crew Medical Officer (CMO) o compañeros para asistencia o redistribución de tareas.
-   - **Nivel 3: Contactar al cirujano de vuelo:** Muestra el retraso de comunicación según el entorno (ej. Marte: 14.2 min, Luna: 1.3s) y simula el empaquetado asíncrono del reporte clínico.
-
-5. **Paneles Educativos para Astronautas No Médicos:**
-   - **"¿Por qué importa?":** Explicaciones con analogías sencillas libres de jerga médica.
-   - **"Guías de Medición Paso a Paso (JIT)":** Instrucciones para usar ecógrafo Butterfly iQ, esfigmomanómetro en $0g$ y test PVT.
-
-6. **Gamificación y Rachas de Misión:**
-   - Checklist interactivo de contramedidas diarias (ejercicio en ARED, escaneo ocular, hidratación).
-   - Racha de días cumplidos, experiencia (XP) y celebración con confeti espacial.
-
----
-
-## 🛠️ 4. Stack Tecnológico
-
-- **Frontend Core:** React 19 + TypeScript + Vite 8
-- **Estilos y Ergonomía:** Tailwind CSS v4 + Animaciones HUD aeroespaciales
-- **Iconografía:** Lucide React
-- **Interactividad & Efectos:** Canvas Confetti + SVG Vectorial
-- **Arquitectura:** PWA Offline-First (cero dependencias obligatorias de servidor en la nube)
+- **Frontend Core:** React 19 + TypeScript (estricto) + Vite 8 (`base: './'`)
+- **Estilos:** Tailwind CSS v4 (`@tailwindcss/vite`) + Cockpit HUD aeroespacial
+- **Gráficos en Tiempo Real:** HTML5 Canvas 2D a 60 FPS + SVG Reactivo
+- **Audio Sintético:** Web Audio API pura (cero archivos `.mp3`/`.wav`)
+- **Asistente de Voz:** Web Speech API nativa (TTS + STT offline)
+- **CI/CD:** GitHub Actions automático desplegando a GitHub Pages
+- **Cero Dependencias Pesadas Externas:** Libre de Three.js, Chart.js, Tone.js o librerías externas que rompan la autonomía offline.
 
 ---
 
@@ -71,17 +99,16 @@ Debido al retraso insalvable en comunicaciones por radio (**~1.3 s en la Luna; 4
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/tu-usuario/nasa-space-apps-challenge.git
-cd nasa-space-apps-challenge
+git clone https://github.com/quirocode/aura-space-health-monitor.git
+cd aura-space-health-monitor
 
 # 2. Instalar dependencias
 npm install
 
-# 3. Iniciar servidor de desarrollo en modo local
-npm run dev
-
-# 4. Compilar para producción (PWA estática)
+# 3. Compilar para producción (validación estricta de tipos)
 npm run build
+
+# 4. Iniciar servidor local
 npm run preview
 ```
 
@@ -89,4 +116,4 @@ npm run preview
 
 ## ⚠️ 6. Aviso Regulatorio / Descargo de Responsabilidad
 
-> **AVISO IMPORTANTE:** Este software ha sido desarrollado como prototipo para el NASA Space Apps Challenge 2026. Es una **herramienta de apoyo a la toma de decisiones clínicas** y **no constituye un dispositivo médico certificado ni sustituye el juicio clínico del Cirujano de Vuelo (Flight Surgeon) de la NASA o agencias espaciales aliadas.**
+> **AVISO CLÍNICO OBLIGATORIO:** Este software ha sido desarrollado como prototipo de investigación para el NASA Space Apps Challenge 2026. Es una **herramienta de apoyo a la toma de decisiones clínicas y telemedicina autónoma (Level of Care IV/V)** y **no constituye un dispositivo médico comercial certificado ni sustituye el juicio clínico del Cirujano de Vuelo (Flight Surgeon) de la NASA o agencias espaciales internacionales.**
