@@ -29,6 +29,9 @@ export const EXERCISE_HALF_TIME_MIN = 240;
 /** Severe SPE peak unshielded dose rate benchmark (mSv/h) */
 export const SPE_NOMINAL_PEAK_MSV_H = 150.0;
 
+/** Severe SPE nominal total integrated unshielded event dose (mSv) */
+export const SPE_NOMINAL_EVENT_TOTAL_MSV = 150.0;
+
 /** Storm shelter areal mass: 20 g/cm² polyethylene (CH2) or water equivalent */
 export const SHELTER_AREAL_MASS_G_CM2 = 20.0;
 

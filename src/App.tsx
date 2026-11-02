@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { BodyRegionId, EnvironmentId, TelemetryReading } from './types';
-import type { VoiceCommandAction } from './types/aerospaceClinical';
+import type { VoiceCommandAction, PocusCaliperMeasurement } from './types/aerospaceClinical';
 import { SpaceflightSimulationEngine } from './services/simulationEngine';
 import { spaceAudioService } from './services/audioService';
 import { missionStorageService } from './services/storageService';
-import { CLINICAL_THRESHOLDS_BY_ENV } from './config/clinicalThresholds';
+import { CLINICAL_THRESHOLDS_BY_ENV, ENVIRONMENTS } from './config/clinicalThresholds';
 
 // Ergonomic Layout & Workspaces
 import { TopMissionBar } from './components/layout/TopMissionBar';
@@ -47,7 +47,9 @@ import {
   Smile, 
   Radiation, 
   Brain,
-  ExternalLink
+  ExternalLink,
+  AlertTriangle,
+  RotateCcw
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -66,6 +68,7 @@ export const App: React.FC = () => {
   const [isCrisisModalOpen, setIsCrisisModalOpen] = useState<boolean>(false);
   const [injectedOnsd, setInjectedOnsd] = useState<number | null>(null);
   const [injectedHeartRate, setInjectedHeartRate] = useState<number | null>(null);
+  const [injectedIjvThrombus, setInjectedIjvThrombus] = useState<boolean | null>(null);
 
   // M4 Ergonomic UX, Command Palette & Circadian States
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
@@ -106,8 +109,41 @@ export const App: React.FC = () => {
   }, [timeline, currentDay, injectedOnsd, injectedHeartRate]);
 
   const activeAlerts = useMemo(() => {
-    return SpaceflightSimulationEngine.generateAlerts(currentTelemetry, currentEnv);
-  }, [currentTelemetry, currentEnv]);
+    const alerts = SpaceflightSimulationEngine.generateAlerts(currentTelemetry, currentEnv);
+    if (injectedIjvThrombus) {
+      alerts.unshift({
+        id: 'alt_ijv_thrombosis_01',
+        timestamp: currentTelemetry.timestamp,
+        title: 'ESTASIS Y TROMBOSIS IJV: Vena Yugular Interna No Compresible',
+        description: 'POCUS Doppler confirma flujo estancado/retrógrado y defecto de llenado intraluminal en Vena Yugular Interna en 0g (Marshall-Goebel et al., 2019).',
+        severity: 'critical',
+        escalationLevel: 'ground_flight_surgeon',
+        bodyRegionId: 'heart',
+        metricKey: 'heartRate',
+        actionProtocol: [
+          'Iniciar anticoagulación profiláctica/terapéutica guiada por protocolo ISS / Orion (Enoxaparina / Rivaroxabán).',
+          'Aplicar protocolo LBNP (Lower Body Negative Pressure) a -25 mmHg durante 60 min para inducir gradiente cefalocaudal.',
+          'Suspender maniobras de Valsalva y ejercicio de alta resistencia ARED hasta reevaluación ecográfica Doppler.',
+          'Transmitir cineloop ecográfico y reporte Doppler vía Store-and-Forward CCSDS a Medicina de Vuelo en Tierra.'
+        ],
+        groundCommEstimate: ENVIRONMENTS[currentEnv].commDelayFormatted
+      });
+    }
+    return alerts;
+  }, [currentTelemetry, currentEnv, injectedIjvThrombus]);
+
+  const currentPocusMeasurement: PocusCaliperMeasurement | undefined = useMemo(() => {
+    if (injectedOnsd === null) return undefined;
+    return {
+      onsd_mm: injectedOnsd,
+      retrobulbarDistance_mm: 3.0,
+      confidenceScore: 0.96,
+      angleOffsetDeg: 0,
+      status: injectedOnsd >= 5.8 ? 'critical' : injectedOnsd >= 5.5 ? 'caution' : 'nominal',
+      feedbackMessage: injectedOnsd >= 5.8 ? 'Edema severo vaina nervio óptico (SANS)' : 'Medición ecográfica ONSD',
+      transducerAligned: true
+    };
+  }, [injectedOnsd]);
 
   // Overall crew status based on active alerts (Color by exception)
   const overallCrewStatus = useMemo(() => {
@@ -127,6 +163,18 @@ export const App: React.FC = () => {
     setSolarStormActive(false);
     setInjectedOnsd(null);
     setInjectedHeartRate(null);
+    setInjectedIjvThrombus(null);
+  };
+
+  const handleClearOverrides = () => {
+    setInjectedOnsd(null);
+    setInjectedHeartRate(null);
+    setInjectedIjvThrombus(null);
+  };
+
+  const handleOpenEvidence = (id: string) => {
+    setSelectedEvidenceId(id);
+    setIsEvidenceDrawerOpen(true);
   };
 
   const handleToggleMute = () => {
@@ -330,6 +378,29 @@ export const App: React.FC = () => {
           />
         )}
 
+        {/* Clearable Clinical Override Active Banner */}
+        {(injectedOnsd !== null || injectedHeartRate !== null || injectedIjvThrombus !== null) && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-amber-950/70 border border-amber-500/50 rounded-xl px-4 py-2.5 text-xs font-mono text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>
+                <strong className="text-amber-100 font-semibold">[Simulated Clinical Override Active]:</strong>{' '}
+                {injectedOnsd !== null && <span className="mr-2">ONSD {injectedOnsd.toFixed(2)} mm (SANS)</span>}
+                {injectedHeartRate !== null && <span className="mr-2">FC {injectedHeartRate} lpm (rPPG)</span>}
+                {injectedIjvThrombus !== null && <span className="mr-2">IJV Trombosis</span>}
+              </span>
+            </div>
+            <button
+              onClick={handleClearOverrides}
+              className="px-3 py-1 bg-amber-900/80 hover:bg-amber-800 border border-amber-500/60 rounded-lg text-amber-100 transition-all text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="Restablecer telemetría a los valores fisiológicos simulados de la misión"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Clear Override</span>
+            </button>
+          </div>
+        )}
+
         {/* ============================================================== */}
         {/* ESTACIÓN 1: VIGILANCIA & BIO-HOLOGRAMA (Layout 3 Columnas)       */}
         {/* ============================================================== */}
@@ -388,6 +459,8 @@ export const App: React.FC = () => {
                     history={timeline.slice(0, currentDay)}
                     thresholds={config.bpSystolic}
                     icon={<Activity className="w-3.5 h-3.5 text-sky-400" />}
+                    evidenceId="CSA-ASTROSKIN-BIO"
+                    onOpenEvidence={handleOpenEvidence}
                     onOpenInfo={() => setWhyItMattersModalRegion('heart')}
                   />
 
@@ -400,6 +473,8 @@ export const App: React.FC = () => {
                     history={timeline.slice(0, currentDay)}
                     thresholds={config.heartRate}
                     icon={<Heart className="w-3.5 h-3.5 text-rose-400" />}
+                    evidenceId="NASA-STD-3001-VOL1-CVS"
+                    onOpenEvidence={handleOpenEvidence}
                     onOpenInfo={() => setWhyItMattersModalRegion('heart')}
                   />
 
@@ -412,6 +487,8 @@ export const App: React.FC = () => {
                     history={timeline.slice(0, currentDay)}
                     thresholds={config.glucose}
                     icon={<Droplet className="w-3.5 h-3.5 text-amber-400" />}
+                    evidenceId="JAXA-KIBO-REDOX"
+                    onOpenEvidence={handleOpenEvidence}
                     onOpenInfo={() => setWhyItMattersModalRegion('kidneys')}
                   />
 
@@ -424,6 +501,8 @@ export const App: React.FC = () => {
                     history={timeline.slice(0, currentDay)}
                     thresholds={config.coreTemp}
                     icon={<Thermometer className="w-3.5 h-3.5 text-orange-400" />}
+                    evidenceId="ESA-EVERYWEAR-TEMP"
+                    onOpenEvidence={handleOpenEvidence}
                     onOpenInfo={() => setWhyItMattersModalRegion('lungs')}
                   />
 
@@ -436,6 +515,8 @@ export const App: React.FC = () => {
                     history={timeline.slice(0, currentDay)}
                     thresholds={config.sleepHours}
                     icon={<Moon className="w-3.5 h-3.5 text-purple-400" />}
+                    evidenceId="NASA-STD-3001-VOL2-CIRC"
+                    onOpenEvidence={handleOpenEvidence}
                     onOpenInfo={() => setWhyItMattersModalRegion('brain')}
                   />
 
@@ -448,6 +529,8 @@ export const App: React.FC = () => {
                     history={timeline.slice(0, currentDay)}
                     thresholds={config.moodScore}
                     icon={<Smile className="w-3.5 h-3.5 text-emerald-400" />}
+                    evidenceId="AEB-CENTENARIO-TRIAGE"
+                    onOpenEvidence={handleOpenEvidence}
                     onOpenInfo={() => setWhyItMattersModalRegion('brain')}
                   />
 
@@ -467,6 +550,8 @@ export const App: React.FC = () => {
                       sourceNote: 'NASA Career Dose Threshold (600 mSv max lifetime)'
                     }}
                     icon={<Radiation className="w-3.5 h-3.5 text-rose-400" />}
+                    evidenceId="NASA-STD-3001-VOL2-RAD"
+                    onOpenEvidence={handleOpenEvidence}
                     onOpenInfo={() => setWhyItMattersModalRegion('immune')}
                   />
 
@@ -479,6 +564,8 @@ export const App: React.FC = () => {
                     history={timeline.slice(0, currentDay)}
                     thresholds={config.cognitiveFatigue}
                     icon={<Brain className="w-3.5 h-3.5 text-pink-400" />}
+                    evidenceId="NASA-HRP-PVT-FATIGUE"
+                    onOpenEvidence={handleOpenEvidence}
                     onOpenInfo={() => setWhyItMattersModalRegion('brain')}
                   />
                 </div>
@@ -606,6 +693,8 @@ export const App: React.FC = () => {
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                 <RealTimeWaveMonitor
                   baseHeartRate={currentTelemetry.heartRate}
+                  currentEnv={currentEnv}
+                  onGravityChange={setCurrentEnv}
                   environmentName={
                     currentEnv === 'earth' 
                       ? 'Tierra (1g)' 
@@ -621,6 +710,10 @@ export const App: React.FC = () => {
                     setInjectedOnsd(onsd);
                     setSelectedRegion('eyes');
                   }}
+                  onInjectIJVAlert={(metrics) => {
+                    setInjectedIjvThrombus(metrics.thrombusDetected);
+                    setSelectedRegion('heart');
+                  }}
                 />
               </div>
             )}
@@ -629,6 +722,8 @@ export const App: React.FC = () => {
             {diagnosticsSubTab === 'ecg' && (
               <RealTimeWaveMonitor
                 baseHeartRate={currentTelemetry.heartRate}
+                currentEnv={currentEnv}
+                onGravityChange={setCurrentEnv}
                 environmentName={
                   currentEnv === 'earth' 
                     ? 'Tierra (1g)' 
@@ -647,12 +742,17 @@ export const App: React.FC = () => {
                   setInjectedOnsd(onsd);
                   setSelectedRegion('eyes');
                 }}
+                onInjectIJVAlert={(metrics) => {
+                  setInjectedIjvThrombus(metrics.thrombusDetected);
+                  setSelectedRegion('heart');
+                }}
               />
             )}
 
             {/* rPPG Webcam DSP Scanner */}
             {diagnosticsSubTab === 'rppg' && (
               <ContactlessRppgScanner
+                currentDay={currentDay}
                 onSyncVitals={(bpm) => {
                   setInjectedHeartRate(bpm);
                 }}
@@ -701,7 +801,7 @@ export const App: React.FC = () => {
             </div>
 
             {predictiveSubTab === 'twin' && (
-              <DigitalTwinForecast currentDay={currentDay} />
+              <DigitalTwinForecast currentDay={currentDay} currentEnv={currentEnv} />
             )}
 
             {predictiveSubTab === 'pharmacy' && (
@@ -714,6 +814,7 @@ export const App: React.FC = () => {
               <DeepSpaceStoreForwardQueue
                 currentTelemetry={currentTelemetry}
                 currentEnv={currentEnv}
+                pocusMeasurement={currentPocusMeasurement}
               />
             )}
           </div>
@@ -727,6 +828,7 @@ export const App: React.FC = () => {
             currentEnv={currentEnv}
             currentDay={currentDay}
             isSolarStormActive={solarStormActive}
+            onToggleSolarStorm={handleTriggerSolarStorm}
             onExitEva={() => setActiveWorkspace('surveillance')}
           />
         )}

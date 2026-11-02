@@ -43,6 +43,18 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
     return () => clearInterval(interval);
   }, []);
 
+  // Escape key listener to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleToggleListening = () => {
@@ -80,8 +92,16 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#090d16]/70 backdrop-blur-md flex items-start justify-center pt-20 px-4 animate-fadeIn select-none">
-      <div className="hud-panel rounded-2xl border border-white/[0.12] p-4 sm:p-5 bg-slate-950/95 text-slate-100 font-mono space-y-4 max-w-2xl w-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 z-50 bg-[#090d16]/70 backdrop-blur-md flex items-start justify-center pt-20 px-4 animate-fadeIn select-none"
+    >
+      <div 
+        role="dialog"
+        aria-modal="true"
+        aria-label="Consola de Voz AURA"
+        className="hud-panel rounded-2xl border border-white/[0.12] p-4 sm:p-5 bg-slate-950/95 text-slate-100 font-mono space-y-4 max-w-2xl w-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+      >
         {/* Header Strip: Mic Status, Waveform, Mute & Close */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-3">

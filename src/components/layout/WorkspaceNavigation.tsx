@@ -59,7 +59,7 @@ export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
             <button
               key={ws.id}
               onClick={() => onSelectWorkspace(ws.id)}
-              className={`flex-1 min-w-[200px] px-3.5 py-2 rounded-lg text-left transition-all font-mono text-xs flex items-center gap-2.5 relative ${
+              className={`flex-1 min-w-[200px] px-3.5 py-2 rounded-lg text-left transition-all font-mono text-xs flex items-center gap-2.5 relative focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:outline-none ${
                 isActive
                   ? 'bg-slate-800 text-slate-100 border border-slate-700/80 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent'

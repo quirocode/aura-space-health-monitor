@@ -17,14 +17,18 @@ import {
 
 interface ContactlessRppgScannerProps {
   onSyncVitals?: (bpm: number, respirationRate: number) => void;
+  currentDay?: number;
 }
 
 export const ContactlessRppgScanner: React.FC<ContactlessRppgScannerProps> = ({
-  onSyncVitals
+  onSyncVitals,
+  currentDay = 18
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
+  const lastDispatchTimeRef = useRef<number>(0);
+  const latestReadingRef = useRef<RppgReading | null>(null);
 
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -171,7 +175,15 @@ export const ContactlessRppgScanner: React.FC<ContactlessRppgScannerProps> = ({
         ? rppgProcessor.processFrame(ctx, roiX, roiY, roiW, roiH)
         : rppgProcessor.computeSimulatedReading(performance.now());
 
-      setReading(latestReading);
+      latestReadingRef.current = latestReading;
+
+      // Throttle React state dispatch to ~4 Hz (every 250ms) to eliminate 60Hz reconciliation thrash,
+      // while keeping smooth 60 FPS Canvas rendering
+      const now = performance.now();
+      if (now - lastDispatchTimeRef.current >= 250) {
+        lastDispatchTimeRef.current = now;
+        setReading(latestReading);
+      }
 
       // Draw real-time optical PPG sparkline overlay at bottom of canvas
       if (latestReading.rawGTrace.length > 2) {
@@ -206,14 +218,15 @@ export const ContactlessRppgScanner: React.FC<ContactlessRppgScannerProps> = ({
   }, [isCameraActive]);
 
   const handleSyncToDigitalTwin = () => {
+    const curReading = latestReadingRef.current || reading;
     if (onSyncVitals) {
-      onSyncVitals(reading.heartRate_bpm, reading.respirationRate_rpm);
+      onSyncVitals(curReading.heartRate_bpm, curReading.respirationRate_rpm);
     }
     // Record in local IndexedDB
     missionStorageService.saveTelemetryReading({
-      day: 18,
+      day: currentDay,
       timestamp: new Date().toISOString(),
-      heartRate: reading.heartRate_bpm,
+      heartRate: curReading.heartRate_bpm,
       bpSystolic: 118,
       bpDiastolic: 76,
       glucose: 94,

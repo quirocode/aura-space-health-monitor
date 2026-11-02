@@ -48,9 +48,13 @@ export class SpaceflightSimulationEngine {
       
       // 2. Solar Storm Event check
       const isSolarStorm = solarStormDay !== undefined && day >= solarStormDay && day <= solarStormDay + 2;
-      const radiationDoseToday = isSolarStorm 
-        ? env.radiationBaselineDaily_mSv * 6.5 + (Math.sin(day) * 0.4) 
-        : env.radiationBaselineDaily_mSv + (Math.sin(day * 0.3) * 0.1);
+      const jitter = Math.sin(day * 0.3) * 0.1;
+      const radiationDoseToday = Math.max(
+        0.001,
+        isSolarStorm 
+          ? env.radiationBaselineDaily_mSv * 6.5 + Math.max(0, Math.sin(day) * 0.4) 
+          : env.radiationBaselineDaily_mSv * (1 + jitter)
+      );
       
       cumulativeRadiation += radiationDoseToday;
 

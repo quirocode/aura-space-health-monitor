@@ -1,6 +1,16 @@
 import type { TelemetryReading } from '../types';
 import type { PvtSessionSummary, TelemetryPacket, PocusCaliperMeasurement } from '../types/aerospaceClinical';
 
+export type TelemetryRecord = TelemetryReading;
+export type PvtSessionRecord = PvtSessionSummary;
+export type TelemetryPacketRecord = TelemetryPacket;
+
+export interface StorageReadMethods {
+  getTelemetryReadings(limit?: number): Promise<TelemetryRecord[]>;
+  getPvtSessions(limit?: number): Promise<PvtSessionRecord[]>;
+  getPackets(limit?: number): Promise<TelemetryPacketRecord[]>;
+}
+
 /**
  * MissionStorageService
  * Real IndexedDB Persistence Engine + HL7-FHIR / Flight Surgeon Report Exporter.
@@ -10,9 +20,10 @@ import type { PvtSessionSummary, TelemetryPacket, PocusCaliperMeasurement } from
 const DB_NAME = 'AURA_EIMO_MISSION_DB';
 const DB_VERSION = 1;
 
-export class MissionStorageService {
+export class MissionStorageService implements StorageReadMethods {
   private db: IDBDatabase | null = null;
   private isAvailable: boolean = false;
+  private initPromise: Promise<boolean>;
   private memoryFallback: {
     telemetry: TelemetryReading[];
     pvt: PvtSessionSummary[];
@@ -24,7 +35,7 @@ export class MissionStorageService {
   };
 
   constructor() {
-    this.initDatabase();
+    this.initPromise = this.initDatabase();
   }
 
   private initDatabase(): Promise<boolean> {
@@ -125,6 +136,96 @@ export class MissionStorageService {
     } catch {
       // Suppressed
     }
+  }
+
+  public async getTelemetryReadings(limit?: number): Promise<TelemetryRecord[]> {
+    await this.initPromise;
+    if (!this.isAvailable || !this.db) {
+      const records = [...this.memoryFallback.telemetry].reverse();
+      return limit ? records.slice(0, limit) : records;
+    }
+
+    return new Promise((resolve) => {
+      try {
+        const tx = this.db!.transaction('telemetry', 'readonly');
+        const store = tx.objectStore('telemetry');
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+          const results = (request.result as TelemetryRecord[]) || [];
+          const reversed = results.reverse();
+          resolve(limit ? reversed.slice(0, limit) : reversed);
+        };
+
+        request.onerror = () => {
+          const fallback = [...this.memoryFallback.telemetry].reverse();
+          resolve(limit ? fallback.slice(0, limit) : fallback);
+        };
+      } catch {
+        const fallback = [...this.memoryFallback.telemetry].reverse();
+        resolve(limit ? fallback.slice(0, limit) : fallback);
+      }
+    });
+  }
+
+  public async getPvtSessions(limit?: number): Promise<PvtSessionRecord[]> {
+    await this.initPromise;
+    if (!this.isAvailable || !this.db) {
+      const records = [...this.memoryFallback.pvt].reverse();
+      return limit ? records.slice(0, limit) : records;
+    }
+
+    return new Promise((resolve) => {
+      try {
+        const tx = this.db!.transaction('pvtSessions', 'readonly');
+        const store = tx.objectStore('pvtSessions');
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+          const results = (request.result as PvtSessionRecord[]) || [];
+          const reversed = results.reverse();
+          resolve(limit ? reversed.slice(0, limit) : reversed);
+        };
+
+        request.onerror = () => {
+          const fallback = [...this.memoryFallback.pvt].reverse();
+          resolve(limit ? fallback.slice(0, limit) : fallback);
+        };
+      } catch {
+        const fallback = [...this.memoryFallback.pvt].reverse();
+        resolve(limit ? fallback.slice(0, limit) : fallback);
+      }
+    });
+  }
+
+  public async getPackets(limit?: number): Promise<TelemetryPacketRecord[]> {
+    await this.initPromise;
+    if (!this.isAvailable || !this.db) {
+      const records = [...this.memoryFallback.packets].reverse();
+      return limit ? records.slice(0, limit) : records;
+    }
+
+    return new Promise((resolve) => {
+      try {
+        const tx = this.db!.transaction('packets', 'readonly');
+        const store = tx.objectStore('packets');
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+          const results = (request.result as TelemetryPacketRecord[]) || [];
+          const reversed = results.reverse();
+          resolve(limit ? reversed.slice(0, limit) : reversed);
+        };
+
+        request.onerror = () => {
+          const fallback = [...this.memoryFallback.packets].reverse();
+          resolve(limit ? fallback.slice(0, limit) : fallback);
+        };
+      } catch {
+        const fallback = [...this.memoryFallback.packets].reverse();
+        resolve(limit ? fallback.slice(0, limit) : fallback);
+      }
+    });
   }
 
   /**

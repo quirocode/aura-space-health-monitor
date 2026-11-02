@@ -22,14 +22,19 @@ import {
 } from 'lucide-react';
 
 interface PocusAiAssistantProps {
+  initialScanMode?: PocusScanMode;
   onInjectSANSAlert?: (onsd_mm: number) => void;
+  onInjectIJVAlert?: (metrics: IjvThrombosisMetrics) => void;
 }
 
 export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
-  onInjectSANSAlert
+  initialScanMode = 'ocular_sans',
+  onInjectSANSAlert,
+  onInjectIJVAlert
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [scanMode, setScanMode] = useState<PocusScanMode>('ocular_sans');
+  const speckleCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [scanMode, setScanMode] = useState<PocusScanMode>(initialScanMode);
   
   // Mode 1: Ocular B-Scan state
   const [transducerAngle, setTransducerAngle] = useState<number>(0); // -15 to +15 deg
@@ -145,9 +150,37 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
     setInjectedSuccess(false);
   };
 
+  // Pre-rendered offscreen speckle texture to eliminate 60fps GC memory churn
+  const getSpeckleTexture = useCallback(() => {
+    if (!speckleCanvasRef.current && typeof document !== 'undefined') {
+      const offscreen = document.createElement('canvas');
+      offscreen.width = 800;
+      offscreen.height = 600;
+      const offCtx = offscreen.getContext('2d');
+      if (offCtx) {
+        const imgData = offCtx.createImageData(800, 600);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          if (Math.random() > 0.45) {
+            const brightness = Math.floor(Math.random() * 60);
+            data[i] = brightness;
+            data[i + 1] = brightness + 10;
+            data[i + 2] = brightness + 22;
+            data[i + 3] = 150;
+          }
+        }
+        offCtx.putImageData(imgData, 0, 0);
+      }
+      speckleCanvasRef.current = offscreen;
+    }
+    return speckleCanvasRef.current;
+  }, []);
+
   const handleInjectAlert = () => {
     if (scanMode === 'ocular_sans' && onInjectSANSAlert) {
       onInjectSANSAlert(simulatedOnsd);
+    } else if (scanMode === 'ijv_thrombosis' && onInjectIJVAlert) {
+      onInjectIJVAlert(ijvMetrics);
     }
     setInjectedSuccess(true);
     spaceAudioService.playEvaAlarm('hypercapnia');
@@ -485,19 +518,11 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
       ctx.fillStyle = '#0a0e1c';
       ctx.fill();
 
-      // Speckle noise
-      const imgData = ctx.createImageData(w, h);
-      const data = imgData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        if (Math.random() > 0.45) {
-          const brightness = Math.floor(Math.random() * 60);
-          data[i] = brightness;
-          data[i + 1] = brightness + 10;
-          data[i + 2] = brightness + 22;
-          data[i + 3] = 150;
-        }
+      // Pre-rendered offscreen speckle texture drawn with clip respect
+      const speckleTexture = getSpeckleTexture();
+      if (speckleTexture) {
+        ctx.drawImage(speckleTexture, 0, 0, w, h);
       }
-      ctx.putImageData(imgData, 0, 0);
 
       const eyeCx = originX;
       const eyeCy = originY + 140;
@@ -647,7 +672,8 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
     transducerPressure, 
     thrombusPresent, 
     lbnpActive, 
-    dopplerActive
+    dopplerActive,
+    getSpeckleTexture
   ]);
 
   // Continuous animation loop for real-time Doppler flow and pulsation
@@ -676,12 +702,15 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
             <Camera className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-semibold text-slate-100">
                 POCUS ASISTIDO POR EDGE-AI
               </span>
               <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-slate-400">
                 BUTTERFLY iQ / TELE-MENTORÍA 0g
+              </span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-950/40 border border-amber-500/30 text-amber-300">
+                SIMULATED VALUE // ILLUSTRATIVE MODEL
               </span>
             </div>
             <p className="text-xs text-slate-400 font-mono">
@@ -836,7 +865,7 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
               {/* Dynamic Transducer Compression Slider */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-slate-300 flex items-center gap-1.5 font-medium">
+                  <label htmlFor="transducer-compression-slider" className="text-slate-300 flex items-center gap-1.5 font-medium cursor-pointer">
                     <Sliders className="w-3.5 h-3.5 text-sky-400" />
                     Presión del Transductor (Compresibilidad):
                   </label>
@@ -849,13 +878,15 @@ export const PocusAiAssistant: React.FC<PocusAiAssistantProps> = ({
                   </span>
                 </div>
                 <input
+                  id="transducer-compression-slider"
+                  aria-label="Transducer Compression Level"
                   type="range"
                   min="0"
                   max="100"
                   step="5"
                   value={transducerPressure}
                   onChange={(e) => setTransducerPressure(parseInt(e.target.value, 10))}
-                  className="w-full accent-sky-400 bg-slate-800 rounded-lg cursor-pointer"
+                  className="w-full accent-sky-400 bg-slate-800 rounded-lg cursor-pointer focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:outline-none"
                 />
                 <div className="flex justify-between text-[10px] text-slate-500">
                   <span>0% (Sin presión)</span>

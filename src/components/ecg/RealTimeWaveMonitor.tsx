@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import type { EcgScenario, WaveMonitorMetrics } from '../../types/aerospaceClinical';
+import type { EnvironmentId } from '../../types';
 import { spaceAudioService } from '../../services/audioService';
 import { 
   Activity, 
@@ -12,18 +13,22 @@ import {
   Orbit, 
   Globe, 
   Compass, 
-  Zap,
+  Zap, 
   Gauge
 } from 'lucide-react';
 
 interface RealTimeWaveMonitorProps {
   baseHeartRate?: number;
   environmentName?: string;
+  currentEnv?: EnvironmentId;
+  onGravityChange?: (env: EnvironmentId) => void;
 }
 
 export const RealTimeWaveMonitor: React.FC<RealTimeWaveMonitorProps> = ({
   baseHeartRate = 72,
-  environmentName = 'Microgravedad (0g)'
+  environmentName = 'Microgravedad (0g)',
+  currentEnv,
+  onGravityChange
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scenario, setScenario] = useState<EcgScenario>('sinus_nominal');
@@ -72,23 +77,37 @@ export const RealTimeWaveMonitor: React.FC<RealTimeWaveMonitorProps> = ({
   const gravityEnvRef = useRef<'0g_microgravity' | '1g_earth'>(gravityEnv);
   const scenarioRef = useRef<EcgScenario>(scenario);
 
-  const handleSelectGravityEnv = (env: '0g_microgravity' | '1g_earth') => {
+  const handleSelectGravityEnv = useCallback((env: '0g_microgravity' | '1g_earth', notifyParent: boolean = true) => {
     setGravityEnv(env);
     gravityEnvRef.current = env;
     setMetrics(prev => ({
       ...prev,
       gravityEnvironment: env,
       qrsElectricalAxis_deg: env === '1g_earth'
-        ? (scenario === 'tachycardia_stress' ? 35 : scenario === 'pvc_microgravity' ? 48 : 54)
-        : (scenario === 'tachycardia_stress' ? -4 : scenario === 'pvc_microgravity' ? 10 : 18),
+        ? (scenarioRef.current === 'tachycardia_stress' ? 35 : scenarioRef.current === 'pvc_microgravity' ? 48 : 54)
+        : (scenarioRef.current === 'tachycardia_stress' ? -4 : scenarioRef.current === 'pvc_microgravity' ? 10 : 18),
       hrvRmssd_ms: env === '1g_earth'
-        ? (scenario === 'tachycardia_stress' ? 16 : scenario === 'pvc_microgravity' ? 28 : 44)
-        : (scenario === 'tachycardia_stress' ? 12 : scenario === 'pvc_microgravity' ? 22 : 36),
+        ? (scenarioRef.current === 'tachycardia_stress' ? 16 : scenarioRef.current === 'pvc_microgravity' ? 28 : 44)
+        : (scenarioRef.current === 'tachycardia_stress' ? 12 : scenarioRef.current === 'pvc_microgravity' ? 22 : 36),
       sympathovagalRatio_lf_hf: env === '1g_earth'
-        ? (scenario === 'tachycardia_stress' ? 3.8 : scenario === 'pvc_microgravity' ? 2.4 : 1.3)
-        : (scenario === 'tachycardia_stress' ? 4.6 : scenario === 'pvc_microgravity' ? 3.1 : 1.6)
+        ? (scenarioRef.current === 'tachycardia_stress' ? 3.8 : scenarioRef.current === 'pvc_microgravity' ? 2.4 : 1.3)
+        : (scenarioRef.current === 'tachycardia_stress' ? 4.6 : scenarioRef.current === 'pvc_microgravity' ? 3.1 : 1.6)
     }));
-  };
+
+    if (notifyParent && onGravityChange) {
+      onGravityChange(env === '1g_earth' ? 'earth' : 'microgravity');
+    }
+  }, [onGravityChange]);
+
+  // Synchronize incoming environment prop from App.tsx
+  useEffect(() => {
+    if (currentEnv) {
+      const target: '0g_microgravity' | '1g_earth' = currentEnv === 'earth' ? '1g_earth' : '0g_microgravity';
+      if (target !== gravityEnvRef.current) {
+        handleSelectGravityEnv(target, false);
+      }
+    }
+  }, [currentEnv, handleSelectGravityEnv]);
 
   const handleSelectScenario = (sc: EcgScenario) => {
     setScenario(sc);
@@ -344,12 +363,15 @@ export const RealTimeWaveMonitor: React.FC<RealTimeWaveMonitorProps> = ({
             <Activity className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-semibold text-slate-100">
                 MONITOR ECG DERIVACIÓN II & PPG 60 FPS
               </span>
               <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-slate-400">
                 TELEMETRÍA AUTONÓMICA CONTINUA
+              </span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-950/40 border border-amber-500/30 text-amber-300">
+                SIMULATED VALUE // ILLUSTRATIVE MODEL
               </span>
             </div>
             <p className="text-xs text-slate-400 font-mono">
@@ -364,7 +386,7 @@ export const RealTimeWaveMonitor: React.FC<RealTimeWaveMonitorProps> = ({
           <div className="flex items-center bg-slate-900 border border-slate-800 p-0.5 rounded-lg text-xs font-mono">
             <button
               onClick={() => handleSelectGravityEnv('0g_microgravity')}
-              className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all ${
+              className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:outline-none ${
                 is0g
                   ? 'bg-sky-950/80 border border-sky-500/50 text-sky-300 font-semibold shadow-[0_0_8px_rgba(56,189,248,0.25)]'
                   : 'text-slate-400 hover:text-slate-200'
@@ -376,7 +398,7 @@ export const RealTimeWaveMonitor: React.FC<RealTimeWaveMonitorProps> = ({
             </button>
             <button
               onClick={() => handleSelectGravityEnv('1g_earth')}
-              className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all ${
+              className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none ${
                 !is0g
                   ? 'bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 font-semibold shadow-[0_0_8px_rgba(16,185,129,0.25)]'
                   : 'text-slate-400 hover:text-slate-200'
@@ -390,7 +412,7 @@ export const RealTimeWaveMonitor: React.FC<RealTimeWaveMonitorProps> = ({
 
           <button
             onClick={handleToggleAudio}
-            className={`px-2.5 py-1 rounded-lg border font-mono text-xs flex items-center gap-1.5 transition-all ${
+            className={`px-2.5 py-1 rounded-lg border font-mono text-xs flex items-center gap-1.5 transition-all focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none ${
               isAudioEnabled 
                 ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300'
                 : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'

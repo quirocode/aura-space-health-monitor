@@ -48,6 +48,18 @@ export const GoldenMinuteCrisisRunner: React.FC<GoldenMinuteCrisisRunnerProps> =
     };
   }, [isMetronomeActive]);
 
+  // Escape key listener to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const diagnoses: Record<'environmental_co2' | 'cardiac_event', DifferentialDiagnosis> = {
@@ -99,8 +111,16 @@ export const GoldenMinuteCrisisRunner: React.FC<GoldenMinuteCrisisRunnerProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#070b14]/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto font-mono text-slate-100 select-none animate-fadeIn">
-      <div className="hud-panel rounded-2xl border border-rose-500/50 bg-slate-950/95 max-w-4xl w-full p-4 sm:p-6 space-y-4 shadow-[0_8px_40px_rgba(239,68,68,0.25)]">
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 z-50 bg-[#070b14]/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto font-mono text-slate-100 select-none animate-fadeIn"
+    >
+      <div 
+        role="dialog"
+        aria-modal="true"
+        aria-label="Protocolo de Crisis Golden-Minute"
+        className="hud-panel rounded-2xl border border-rose-500/50 bg-slate-950/95 max-w-4xl w-full p-4 sm:p-6 space-y-4 shadow-[0_8px_40px_rgba(239,68,68,0.25)]"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-3">
